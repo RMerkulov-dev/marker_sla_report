@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NorthStar Memorial Group — SLA Performance Report</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1e2334;
+    --border: #2a3048;
+    --accent: #e8c97a;
+    --accent2: #5b8af5;
+    --red: #f04e4e;
+    --yellow: #f5a623;
+    --green: #4ecb71;
+    --text: #e8eaf0;
+    --muted: #7a82a0;
+    --font: 'DM Sans', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13px;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .logo {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+    color: var(--accent);
+  }
+  .report-title {
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .header-right { display: flex; align-items: center; gap: 10px; }
+  .badge {
+    background: rgba(232,201,122,0.12);
+    color: var(--accent);
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    border: 1px solid rgba(232,201,122,0.25);
+  }
+  .last-refresh {
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .export-btn {
+    background: var(--accent);
+    color: #0f1117;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: opacity 0.15s;
+  }
+  .export-btn:hover { opacity: 0.85; }
+
+  /* Filters */
+  .filters-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .filter-group { display: flex; align-items: center; gap: 8px; }
+  .filter-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .filter-select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-family: var(--font);
+    cursor: pointer;
+    outline: none;
+  }
+  .filter-select:focus { border-color: var(--accent2); }
+  .filter-sep { width: 1px; height: 20px; background: var(--border); }
+
+  /* Layout */
+  .main { padding: 20px 24px; display: flex; flex-direction: column; gap: 16px; }
+
+  /* KPI Cards */
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .kpi-card.red::before { background: var(--red); }
+  .kpi-card.yellow::before { background: var(--yellow); }
+  .kpi-card.green::before { background: var(--green); }
+  .kpi-card.blue::before { background: var(--accent2); }
+
+  .kpi-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+  .kpi-value { font-size: 32px; font-weight: 600; letter-spacing: -1px; margin-bottom: 4px; }
+  .kpi-card.red .kpi-value { color: var(--red); }
+  .kpi-card.yellow .kpi-value { color: var(--yellow); }
+  .kpi-card.green .kpi-value { color: var(--green); }
+  .kpi-card.blue .kpi-value { color: var(--accent2); }
+  .kpi-sub { font-size: 11px; color: var(--muted); }
+  .kpi-delta { font-size: 11px; margin-top: 6px; }
+  .kpi-delta.worse { color: var(--red); }
+  .kpi-delta.better { color: var(--green); }
+
+  /* Two-column layout */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .three-col { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+
+  /* Panel */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .panel-title { font-size: 13px; font-weight: 600; }
+  .panel-subtitle { font-size: 11px; color: var(--muted); }
+  .panel-body { padding: 16px; }
+
+  /* Milestone SLA Table */
+  .milestone-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+  .milestone-cell {
+    background: var(--surface2);
+    border-radius: 6px;
+    padding: 12px;
+    border: 1px solid var(--border);
+  }
+  .m-name { font-size: 11px; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .m-stats { display: flex; flex-direction: column; gap: 4px; }
+  .m-stat-row { display: flex; justify-content: space-between; align-items: center; }
+  .m-stat-label { font-size: 11px; color: var(--muted); }
+  .m-stat-val { font-size: 13px; font-weight: 600; }
+  .m-stat-val.red { color: var(--red); }
+  .m-stat-val.yellow { color: var(--yellow); }
+  .m-stat-val.green { color: var(--green); }
+  .progress-bar { height: 4px; background: var(--border); border-radius: 2px; margin-top: 8px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 2px; }
+
+  /* Location Table */
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    text-align: left;
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr { border-bottom: 1px solid rgba(42,48,72,0.5); }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 9px 10px; font-size: 12px; }
+  .loc-name { font-weight: 500; }
+  .dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    margin-right: 6px;
+  }
+  .dot.red { background: var(--red); }
+  .dot.yellow { background: var(--yellow); }
+  .dot.green { background: var(--green); }
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 500;
+  }
+  .tag.granite { background: rgba(91,138,245,0.15); color: var(--accent2); }
+  .tag.bronze { background: rgba(232,201,122,0.15); color: var(--accent); }
+  .tag.both { background: rgba(78,203,113,0.12); color: var(--green); }
+
+  /* Bar chart */
+  .bar-chart { display: flex; flex-direction: column; gap: 10px; }
+  .bar-row { display: flex; align-items: center; gap: 10px; }
+  .bar-label { width: 130px; font-size: 11px; color: var(--muted); text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bar-track { flex: 1; height: 18px; background: var(--surface2); border-radius: 3px; overflow: hidden; position: relative; }
+  .bar-fill { height: 100%; border-radius: 3px; display: flex; align-items: center; padding-left: 8px; font-size: 10px; font-weight: 600; transition: width 0.6s ease; white-space: nowrap; }
+  .bar-fill.red { background: rgba(240,78,78,0.7); color: #fff; }
+  .bar-fill.yellow { background: rgba(245,166,35,0.7); color: #fff; }
+  .bar-fill.green { background: rgba(78,203,113,0.5); color: #fff; }
+
+  /* Donut chart SVG area */
+  .donut-area { display: flex; align-items: center; justify-content: center; gap: 24px; padding: 8px 0; }
+  .donut-legend { display: flex; flex-direction: column; gap: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-val { font-weight: 600; color: var(--text); }
+  .legend-lbl { color: var(--muted); }
+
+  /* Cases table in bottom */
+  .cases-header { display: flex; align-items: center; justify-content: space-between; }
+  .search-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 12px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-family: var(--font);
+    outline: none;
+    width: 200px;
+  }
+  .search-input::placeholder { color: var(--muted); }
+  .search-input:focus { border-color: var(--accent2); }
+
+  .sla-pill {
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    font-family: var(--mono);
+  }
+  .sla-pill.red { background: rgba(240,78,78,0.15); color: var(--red); }
+  .sla-pill.yellow { background: rgba(245,166,35,0.15); color: var(--yellow); }
+  .sla-pill.ok { background: rgba(78,203,113,0.12); color: var(--green); }
+
+  .days-over { font-family: var(--mono); font-size: 12px; }
+  .days-over.red { color: var(--red); }
+  .days-over.yellow { color: var(--yellow); }
+  .days-over.green { color: var(--green); }
+
+  .tab-row { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
+  .tab {
+    padding: 8px 14px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: all 0.15s;
+  }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab:hover:not(.active) { color: var(--text); }
+
+  /* Week trend sparkline area */
+  .sparkline-area { display: flex; align-items: flex-end; gap: 4px; height: 36px; }
+  .spark-bar { flex: 1; border-radius: 2px 2px 0 0; min-width: 6px; }
+
+  /* Stacked SLA Bar */
+  .sla-bar-list { display: flex; flex-direction: column; gap: 18px; }
+  .sla-bar-row { display: flex; flex-direction: column; gap: 7px; }
+  .sla-bar-label { display: flex; justify-content: space-between; align-items: baseline; }
+  .sla-bar-name { font-size: 13px; font-weight: 600; }
+  .sla-bar-total { font-size: 11px; color: var(--muted); }
+  .sla-bar-track {
+    display: flex;
+    height: 28px;
+    border-radius: 6px;
+    overflow: hidden;
+    gap: 1px;
+    background: var(--border);
+  }
+  .sla-seg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.92);
+    font-family: var(--mono);
+    transition: opacity 0.15s;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  .sla-seg:hover { opacity: 0.8; cursor: default; }
+  .sla-seg.red    { background: var(--red); }
+  .sla-seg.yellow { background: var(--yellow); }
+  .sla-seg.green  { background: #35a85c; }
+  .sla-bar-legend {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .sla-legend-item { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
+  .sla-legend-dot {
+    width: 10px; height: 10px; border-radius: 3px;
+  }
+  .sla-legend-dot.red    { background: var(--red); }
+  .sla-legend-dot.yellow { background: var(--yellow); }
+  .sla-legend-dot.green  { background: #35a85c; }
+
+  /* 4-chart scatter grid */
+  .scatter-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .scatter-cell { display: flex; flex-direction: column; gap: 8px; }
+  .scatter-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sla-badge {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--muted);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 1px 7px;
+    border-radius: 3px;
+    font-family: var(--mono);
+  }
+
+  /* Top Delayed Stages */
+  .top-delays-list { display: flex; flex-direction: column; gap: 14px; }
+  .delay-row {
+    display: grid;
+    grid-template-columns: 32px 1fr 2fr 60px;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 14px;
+    background: var(--surface2);
+    border-radius: 7px;
+    border: 1px solid var(--border);
+  }
+  .delay-rank { font-size: 18px; font-weight: 700; font-family: var(--mono); text-align: center; }
+  .delay-name { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+  .delay-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+  .delay-tag {
+    padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 600;
+  }
+  .delay-tag.failed { background: rgba(240,78,78,0.15); color: var(--red); }
+  .delay-tag.warning { background: rgba(245,166,35,0.15); color: var(--yellow); }
+  .delay-tag.neutral { background: rgba(122,130,160,0.15); color: var(--muted); }
+  .delay-bar-area { display: flex; flex-direction: column; gap: 5px; }
+  .delay-bar-track { height: 10px; background: var(--border); border-radius: 5px; overflow: hidden; }
+  .delay-bar-fill { height: 100%; border-radius: 5px; transition: width 0.8s cubic-bezier(.4,0,.2,1); }
+  .delay-avg { font-size: 12px; font-weight: 700; font-family: var(--mono); }
+  .delay-count { font-size: 20px; font-weight: 700; text-align: right; color: var(--text); font-family: var(--mono); }
+
+  footer {
+    padding: 12px 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  @media print {
+    body { background: white; color: #111; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo">⬡ NorthStar Memorial Group</div>
+    <div class="report-title">/ SLA Performance Report</div>
+    <div class="badge">WEEKLY</div>
+  </div>
+  <div class="header-right">
+    <span class="last-refresh">Last refresh: Mar 10, 2025 · 06:00 AM</span>
+    <button class="export-btn" onclick="alert('Export CSV triggered — ' + document.querySelector('.filter-select').value + ' · ' + document.querySelectorAll('.filter-select')[1].value)">⬇ Export Cases</button>
+  </div>
+</div>
+
+<!-- FILTERS -->
+<div class="filters-bar">
+  <div class="filter-group">
+    <span class="filter-label">Region</span>
+    <select class="filter-select" onchange="updateRegion(this.value)">
+      <option value="all">All Regions</option>
+      <option value="red_river" selected>Red River Region</option>
+      <option value="west">West Region (CA/WA)</option>
+      <option value="south">South Region</option>
+    </select>
+  </div>
+  <div class="filter-sep"></div>
+  <div class="filter-group">
+    <span class="filter-label">Material</span>
+    <select class="filter-select" onchange="updateMaterial(this.value)">
+      <option value="all">All Materials</option>
+      <option value="granite">Granite</option>
+      <option value="bronze">Bronze</option>
+    </select>
+  </div>
+  <div class="filter-sep"></div>
+  <div class="filter-group">
+    <span class="filter-label">Milestone</span>
+    <select class="filter-select">
+      <option value="all">All Milestones</option>
+      <option value="sketch_received">Sketch Received</option>
+      <option value="memorial_received">Memorial Received</option>
+      <option value="sketch_approved">Sketch Approved</option>
+      <option value="iwo_completed">IWO Completed</option>
+    </select>
+  </div>
+  <div class="filter-sep"></div>
+  <div class="filter-group">
+    <span class="filter-label">SLA Status</span>
+    <select class="filter-select">
+      <option value="all">All</option>
+      <option value="red">🔴 Failed</option>
+      <option value="yellow">🟡 Warning</option>
+      <option value="green">🟢 In Progress</option>
+    </select>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+  <!-- KPI ROW -->
+  <div class="kpi-row">
+    <div class="kpi-card red">
+      <div class="kpi-label">Failed</div>
+      <div class="kpi-value">47</div>
+      <div class="kpi-sub">Cases across all milestones</div>
+      <div class="kpi-delta worse">▲ +8 vs last week</div>
+    </div>
+    <div class="kpi-card yellow">
+      <div class="kpi-label">Warning</div>
+      <div class="kpi-value">23</div>
+      <div class="kpi-sub">Approaching SLA threshold</div>
+      <div class="kpi-delta worse">▲ +3 vs last week</div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-label">In Progress</div>
+      <div class="kpi-value">134</div>
+      <div class="kpi-sub">Within SLA limits</div>
+      <div class="kpi-delta better">▼ −4 vs last week</div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-label">Total Active Cases</div>
+      <div class="kpi-value">204</div>
+      <div class="kpi-sub">Red River Region</div>
+      <div class="kpi-delta" style="color:var(--muted)">Week of Mar 3–10, 2025</div>
+    </div>
+  </div>
+
+  <!-- 4 REGION SCATTER CHARTS — pipeline stages on X -->
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Days per Pipeline Stage — Scatter View</div>
+        <div class="panel-subtitle">X axis: Pipeline stage · Y axis: Days spent · Each dot = one case</div>
+      </div>
+      <div style="display:flex;gap:16px;align-items:center;">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red);border-radius:50%"></div><span class="legend-lbl" style="font-size:11px">Failed</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--yellow);border-radius:50%"></div><span class="legend-lbl" style="font-size:11px">Warning</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green);border-radius:50%"></div><span class="legend-lbl" style="font-size:11px">In Progress</span></div>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="scatter-grid">
+        <div class="scatter-cell">
+          <div class="scatter-title">📍 Sketch Requested</div>
+          <canvas id="sc0" height="160"></canvas>
+        </div>
+        <div class="scatter-cell">
+          <div class="scatter-title">📍 Sketch Received</div>
+          <canvas id="sc1" height="160"></canvas>
+        </div>
+        <div class="scatter-cell">
+          <div class="scatter-title">📍 Sketch Approved</div>
+          <canvas id="sc2" height="160"></canvas>
+        </div>
+        <div class="scatter-cell">
+          <div class="scatter-title">📍 Memorial Received</div>
+          <canvas id="sc3" height="160"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REGIONAL PERFORMANCE MATRIX -->
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">Regional Performance Matrix</div>
+        <div class="panel-subtitle">Highlighting the most problematic stages and critical SLA breaches by region</div>
+      </div>
+    </div>
+    <div class="panel-body" style="padding: 0;">
+      <table>
+        <thead>
+          <tr>
+            <th style="padding-left: 24px;">Region</th>
+            <th>Most Problematic Stage</th>
+            <th style="text-align: center;">Failed SLAs</th>
+            <th style="text-align: right; padding-right: 24px;">Max Days in Stage</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="loc-name" style="padding-left: 24px;">📍 Shreveport, LA</td>
+            <td>Memorial Received</td>
+            <td style="text-align: center;"><span class="sla-pill red">4 cases</span></td>
+            <td style="text-align: right; padding-right: 24px;"><span class="days-over red">29d</span></td>
+          </tr>
+          <tr>
+            <td class="loc-name" style="padding-left: 24px;">📍 Baton Rouge, LA</td>
+            <td>Sketch Received</td>
+            <td style="text-align: center;"><span class="sla-pill red">4 cases</span></td>
+            <td style="text-align: right; padding-right: 24px;"><span class="days-over red">26d</span></td>
+          </tr>
+          <tr>
+            <td class="loc-name" style="padding-left: 24px;">📍 Monroe, LA</td>
+            <td>Memorial Received</td>
+            <td style="text-align: center;"><span class="sla-pill red">3 cases</span></td>
+            <td style="text-align: right; padding-right: 24px;"><span class="days-over red">25d</span></td>
+          </tr>
+          <tr>
+            <td class="loc-name" style="padding-left: 24px;">📍 Alexandria, LA</td>
+            <td>Memorial Received</td>
+            <td style="text-align: center;"><span class="sla-pill red">2 cases</span></td>
+            <td style="text-align: right; padding-right: 24px;"><span class="days-over red">23d</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <span>NorthStar Memorial Group · SLA Performance Report · Powered by Dynamica Labs</span>
+  <span>Report generated: March 10, 2025 · Data source: Case Management System · Red River Region</span>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// Pipeline stages: X axis labels + their SLA thresholds
+const pipelineStages = [
+  { name: 'Sketch Requested',    sla: 7  },
+  { name: 'Sketch Received',     sla: 21 },
+  { name: 'Sketch Approved',     sla: 21 },
+  { name: 'Vendor Confirmation', sla: 3  },
+  { name: 'Memorial Received',   sla: 21 },
+];
+const stageShort = pipelineStages.map(s => s.name);
+
+// Cases per region: { stage name, days spent }
+const regionData = {
+  'Shreveport, LA': [
+    { si: 'Sketch Requested',    days: 5  }, { si: 'Sketch Requested',    days: 7  }, { si: 'Sketch Requested',    days: 9  },
+    { si: 'Sketch Received',     days: 24 }, { si: 'Sketch Received',     days: 19 }, { si: 'Sketch Received',     days: 15 }, { si: 'Sketch Received',     days: 22 },
+    { si: 'Sketch Approved',     days: 20 }, { si: 'Sketch Approved',     days: 18 }, { si: 'Sketch Approved',     days: 8  },
+    { si: 'Vendor Confirmation', days: 2  }, { si: 'Vendor Confirmation', days: 4  }, { si: 'Vendor Confirmation', days: 1  },
+    { si: 'Memorial Received',   days: 29 }, { si: 'Memorial Received',   days: 25 }, { si: 'Memorial Received',   days: 20 }, { si: 'Memorial Received',   days: 14 },
+  ],
+  'Baton Rouge, LA': [
+    { si: 'Sketch Requested',    days: 4  }, { si: 'Sketch Requested',    days: 6  }, { si: 'Sketch Requested',    days: 8  },
+    { si: 'Sketch Received',     days: 26 }, { si: 'Sketch Received',     days: 23 }, { si: 'Sketch Received',     days: 12 }, { si: 'Sketch Received',     days: 20 },
+    { si: 'Sketch Approved',     days: 22 }, { si: 'Sketch Approved',     days: 15 }, { si: 'Sketch Approved',     days: 11 },
+    { si: 'Vendor Confirmation', days: 3  }, { si: 'Vendor Confirmation', days: 5  }, { si: 'Vendor Confirmation', days: 2  },
+    { si: 'Memorial Received',   days: 27 }, { si: 'Memorial Received',   days: 22 }, { si: 'Memorial Received',   days: 11 },
+  ],
+  'Monroe, LA': [
+    { si: 'Sketch Requested',    days: 3  }, { si: 'Sketch Requested',    days: 7  }, { si: 'Sketch Requested',    days: 5  },
+    { si: 'Sketch Received',     days: 22 }, { si: 'Sketch Received',     days: 18 }, { si: 'Sketch Received',     days: 10 },
+    { si: 'Sketch Approved',     days: 13 }, { si: 'Sketch Approved',     days: 16 }, { si: 'Sketch Approved',     days: 9  },
+    { si: 'Vendor Confirmation', days: 2  }, { si: 'Vendor Confirmation', days: 1  }, { si: 'Vendor Confirmation', days: 4  },
+    { si: 'Memorial Received',   days: 24 }, { si: 'Memorial Received',   days: 25 }, { si: 'Memorial Received',   days: 12 },
+  ],
+  'Alexandria, LA': [
+    { si: 'Sketch Requested',    days: 4  }, { si: 'Sketch Requested',    days: 6  },
+    { si: 'Sketch Received',     days: 20 }, { si: 'Sketch Received',     days: 19 }, { si: 'Sketch Received',     days: 13 },
+    { si: 'Sketch Approved',     days: 19 }, { si: 'Sketch Approved',     days: 14 }, { si: 'Sketch Approved',     days: 8  },
+    { si: 'Vendor Confirmation', days: 2  }, { si: 'Vendor Confirmation', days: 3  },
+    { si: 'Memorial Received',   days: 23 }, { si: 'Memorial Received',   days: 20 }, { si: 'Memorial Received',   days: 10 },
+  ],
+};
+
+const tooltipCfg = {
+  backgroundColor: '#1e2334',
+  borderColor: '#2a3048',
+  borderWidth: 1,
+  titleColor: '#e8eaf0',
+  bodyColor: '#7a82a0',
+  padding: 9,
+  callbacks: {
+    title: items => items[0].raw.stage || '',
+    label: item => {
+      const sla = pipelineStages.find(s => s.name === item.raw.stage)?.sla;
+      return ` ${item.dataset.label} · ${item.raw.origDays}d  (SLA: ${sla}d)`;
+    }
+  }
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+  const regions = Object.keys(regionData);
+  const canvasIds = ['sc0', 'sc1', 'sc2', 'sc3'];
+
+  regions.forEach((region, ri) => {
+    const ctx = document.getElementById(canvasIds[ri]);
+    if (!ctx) return;
+
+    const cases = regionData[region];
+    const maxDays = Math.max(...cases.map(c => c.days), 25);
+
+    // Count per stage for y-jitter
+    const stageTotals = {}, stageCount = {};
+    cases.forEach(c => { stageTotals[c.si] = (stageTotals[c.si] || 0) + 1; });
+
+    const failed = [], warning = [], ok = [];
+    cases.forEach(c => {
+      stageCount[c.si] = (stageCount[c.si] || 0);
+      const total = stageTotals[c.si] || 1;
+      const yJitter = (stageCount[c.si] - (total - 1) / 2) * 0.35;
+      stageCount[c.si]++;
+      const slaThresh = pipelineStages.find(s => s.name === c.si)?.sla ?? 21;
+      const pt = { x: c.si, y: c.days + yJitter, r: 5, origDays: c.days, stage: c.si };
+      if (c.days > slaThresh)           failed.push(pt);
+      else if (c.days >= slaThresh - 3) warning.push(pt);
+      else                              ok.push(pt);
+    });
+
+    new Chart(ctx, {
+      type: 'bubble',
+      data: {
+        datasets: [
+          { label: 'Failed',      data: failed,  backgroundColor: 'rgba(240,78,78,0.8)',  borderColor: '#f04e4e', borderWidth: 1 },
+          { label: 'Warning',     data: warning, backgroundColor: 'rgba(245,166,35,0.8)', borderColor: '#f5a623', borderWidth: 1 },
+          { label: 'In Progress', data: ok,      backgroundColor: 'rgba(78,203,113,0.7)', borderColor: '#4ecb71', borderWidth: 1 },
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: {
+            type: 'category',
+            labels: stageShort,
+            offset: true,
+            ticks: {
+              color: '#7a82a0',
+              font: { family: 'DM Sans', size: 9 },
+              maxRotation: 14,
+              autoSkip: false,
+            },
+            grid: { color: 'rgba(42,48,72,0.45)' },
+            border: { color: '#2a3048' },
+          },
+          y: {
+            min: 0,
+            max: Math.ceil(maxDays / 5) * 5 + 4,
+            ticks: {
+              color: '#7a82a0',
+              font: { family: 'DM Mono', size: 9 },
+              callback: v => v + 'd',
+              stepSize: 5,
+            },
+            grid: { color: 'rgba(42,48,72,0.45)' },
+            border: { color: '#2a3048' },
+            title: { display: true, text: 'Days', color: '#4a5270', font: { size: 9 } },
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: tooltipCfg,
+        },
+        animation: { duration: 700 },
+      }
+    });
+  });
+});
+
+function updateRegion(val) {}
+function updateMaterial(val) {}
+</script>
+</body>
+</html>
