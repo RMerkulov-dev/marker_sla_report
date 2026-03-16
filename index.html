@@ -347,7 +347,7 @@
     </div>
   </div>
 
-  <!-- COMBO CHARTS -->
+  <!-- BAR CHARTS -->
   <div class="panel">
     <div class="panel-header">
       <div>
@@ -367,19 +367,19 @@
     <div class="panel-body">
       <div class="scatter-grid">
         <div class="scatter-cell">
-          <div class="scatter-title">📍 Shreveport, LA</div>
+          <div class="scatter-title">1. Sketch Requested ➔ Sketch Received</div>
           <canvas id="sc0" height="160"></canvas>
         </div>
         <div class="scatter-cell">
-          <div class="scatter-title">📍 Baton Rouge, LA</div>
+          <div class="scatter-title">2. Sketch Received ➔ Sketch Approved</div>
           <canvas id="sc1" height="160"></canvas>
         </div>
         <div class="scatter-cell">
-          <div class="scatter-title">📍 Monroe, LA</div>
+          <div class="scatter-title">3. Sketch Approved ➔ Vendor Confirmation</div>
           <canvas id="sc2" height="160"></canvas>
         </div>
         <div class="scatter-cell">
-          <div class="scatter-title">📍 Alexandria, LA</div>
+          <div class="scatter-title">4. Vendor Confirmation ➔ Memorial Received</div>
           <canvas id="sc3" height="160"></canvas>
         </div>
       </div>
@@ -407,25 +407,25 @@
         <tbody>
           <tr>
             <td class="loc-name" style="padding-left: 24px;">Shreveport, LA</td>
-            <td>Memorial Received</td>
+            <td>In Production</td>
             <td style="text-align: center;"><span class="sla-pill red">4 cases</span></td>
             <td style="text-align: right; padding-right: 24px;"><span class="days-over red">29d</span></td>
           </tr>
           <tr>
             <td class="loc-name" style="padding-left: 24px;">Baton Rouge, LA</td>
-            <td>Sketch Received</td>
+            <td>Awaiting Family Approval</td>
             <td style="text-align: center;"><span class="sla-pill red">4 cases</span></td>
             <td style="text-align: right; padding-right: 24px;"><span class="days-over red">26d</span></td>
           </tr>
           <tr>
             <td class="loc-name" style="padding-left: 24px;">Monroe, LA</td>
-            <td>Memorial Received</td>
+            <td>In Design</td>
             <td style="text-align: center;"><span class="sla-pill red">3 cases</span></td>
             <td style="text-align: right; padding-right: 24px;"><span class="days-over red">25d</span></td>
           </tr>
           <tr>
             <td class="loc-name" style="padding-left: 24px;">Alexandria, LA</td>
-            <td>Memorial Received</td>
+            <td>Vendor PO Created</td>
             <td style="text-align: center;"><span class="sla-pill red">2 cases</span></td>
             <td style="text-align: right; padding-right: 24px;"><span class="days-over red">23d</span></td>
           </tr>
@@ -444,49 +444,54 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-// Pipeline stages and their SLA thresholds
-const pipelineStages = [
-  { name: 'Sketch Requested',    sla: 7  },
-  { name: 'Sketch Received',     sla: 21 },
-  { name: 'Sketch Approved',     sla: 21 },
-  { name: 'Vendor Confirmation', sla: 3  },
-  { name: 'Memorial Received',   sla: 21 },
+// Phase charts configuration based on the new schema
+const phaseChartsConfig = [
+  {
+    id: 'sc0',
+    stages: [
+      { name: 'Sketch Requested', sla: 5 },
+      { name: 'In Design', sla: 10 },
+      { name: 'Design Review', sla: 5 },
+      { name: 'Sketch Received', sla: 2 }
+    ],
+    failed: [6.5, 14, 7.5, 4],
+    warning: [4, 9, 3.5, 2]
+  },
+  {
+    id: 'sc1',
+    stages: [
+      { name: 'Sketch Received', sla: 2 },
+      { name: 'Sent to Family', sla: 3 },
+      { name: 'Awaiting Family Approval', sla: 14 },
+      { name: 'Sketch Approved', sla: 2 }
+    ],
+    failed: [4, 5.5, 18, 4.5],
+    warning: [1.5, 2.5, 13, 1.5]
+  },
+  {
+    id: 'sc2',
+    stages: [
+      { name: 'Sketch Approved', sla: 2 },
+      { name: 'Vendor PO Created', sla: 3 },
+      { name: 'Vendor Confirmation', sla: 3 }
+    ],
+    failed: [5, 7, 5],
+    warning: [2, 2.5, 2.5]
+  },
+  {
+    id: 'sc3',
+    stages: [
+      { name: 'Vendor Confirmation', sla: 3 },
+      { name: 'In Production', sla: 21 },
+      { name: 'Shipped', sla: 7 },
+      { name: 'Memorial Received', sla: 2 }
+    ],
+    failed: [5.5, 28, 11, 4.5],
+    warning: [2.5, 20, 6, 2]
+  }
 ];
-const stageShort = pipelineStages.map(s => s.name);
 
-// Location data (Raw Cases)
-const regionData = {
-  'Shreveport': [
-    { si: 'Sketch Requested',    days: 5  }, { si: 'Sketch Requested',    days: 7  }, { si: 'Sketch Requested',    days: 9  },
-    { si: 'Sketch Received',     days: 24 }, { si: 'Sketch Received',     days: 19 }, { si: 'Sketch Received',     days: 15 }, { si: 'Sketch Received',     days: 22 },
-    { si: 'Sketch Approved',     days: 20 }, { si: 'Sketch Approved',     days: 18 }, { si: 'Sketch Approved',     days: 8  },
-    { si: 'Vendor Confirmation', days: 2  }, { si: 'Vendor Confirmation', days: 4  }, { si: 'Vendor Confirmation', days: 1  },
-    { si: 'Memorial Received',   days: 29 }, { si: 'Memorial Received',   days: 25 }, { si: 'Memorial Received',   days: 20 }, { si: 'Memorial Received',   days: 14 },
-  ],
-  'Baton Rouge': [
-    { si: 'Sketch Requested',    days: 4  }, { si: 'Sketch Requested',    days: 6  }, { si: 'Sketch Requested',    days: 8  },
-    { si: 'Sketch Received',     days: 26 }, { si: 'Sketch Received',     days: 23 }, { si: 'Sketch Received',     days: 12 }, { si: 'Sketch Received',     days: 20 },
-    { si: 'Sketch Approved',     days: 22 }, { si: 'Sketch Approved',     days: 15 }, { si: 'Sketch Approved',     days: 11 },
-    { si: 'Vendor Confirmation', days: 3  }, { si: 'Vendor Confirmation', days: 5  }, { si: 'Vendor Confirmation', days: 2  },
-    { si: 'Memorial Received',   days: 27 }, { si: 'Memorial Received',   days: 22 }, { si: 'Memorial Received',   days: 11 },
-  ],
-  'Monroe': [
-    { si: 'Sketch Requested',    days: 3  }, { si: 'Sketch Requested',    days: 7  }, { si: 'Sketch Requested',    days: 5  },
-    { si: 'Sketch Received',     days: 22 }, { si: 'Sketch Received',     days: 18 }, { si: 'Sketch Received',     days: 10 },
-    { si: 'Sketch Approved',     days: 13 }, { si: 'Sketch Approved',     days: 16 }, { si: 'Sketch Approved',     days: 9  },
-    { si: 'Vendor Confirmation', days: 2  }, { si: 'Vendor Confirmation', days: 1  }, { si: 'Vendor Confirmation', days: 4  },
-    { si: 'Memorial Received',   days: 24 }, { si: 'Memorial Received',   days: 25 }, { si: 'Memorial Received',   days: 12 },
-  ],
-  'Alexandria': [
-    { si: 'Sketch Requested',    days: 4  }, { si: 'Sketch Requested',    days: 6  },
-    { si: 'Sketch Received',     days: 20 }, { si: 'Sketch Received',     days: 19 }, { si: 'Sketch Received',     days: 13 },
-    { si: 'Sketch Approved',     days: 19 }, { si: 'Sketch Approved',     days: 14 }, { si: 'Sketch Approved',     days: 8  },
-    { si: 'Vendor Confirmation', days: 2  }, { si: 'Vendor Confirmation', days: 3  },
-    { si: 'Memorial Received',   days: 23 }, { si: 'Memorial Received',   days: 20 }, { si: 'Memorial Received',   days: 10 },
-  ],
-};
-
-// Tooltip configuration in Fluent style for Bar/Line combos
+// Tooltip configuration in Fluent style
 const tooltipCfg = {
   backgroundColor: '#ffffff',
   borderColor: '#e1dfdd',
@@ -500,82 +505,112 @@ const tooltipCfg = {
   callbacks: {
     title: items => items[0].label,
     label: item => {
-      if (item.raw === null) return null; // Не показываем тултип, если нет кейсов в группе
-      if (item.dataset.type === 'line') return ` ${item.dataset.label}: ${item.raw}d`;
-      const sla = pipelineStages.find(s => s.name === item.label)?.sla;
+      if (item.raw === null || item.dataset.type === 'line') return null; // Hide if no data or line
+      const stagesConfig = item.chart.config.data.stagesConfig;
+      const sla = stagesConfig[item.dataIndex].sla;
       return ` ${item.dataset.label} Median: ${item.raw}d (SLA limit: ${sla}d)`;
     }
   }
 };
 
-document.addEventListener('DOMContentLoaded', function() {
-  const regions = Object.keys(regionData);
-  const canvasIds = ['sc0', 'sc1', 'sc2', 'sc3'];
+// Custom plugin to draw flat SLA thresholds per column and numbers on top of bars
+const slaAndLabelsPlugin = {
+  id: 'slaAndLabelsPlugin',
+  afterDatasetsDraw(chart) {
+    const { ctx, chartArea, scales } = chart;
+    const xAxis = scales.x;
+    const yAxis = scales.y;
+    const stagesConfig = chart.config.data.stagesConfig;
 
+    ctx.save();
+    
+    // 1. Draw SLA Lines (Flat per column, not zigzag)
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = '#616161';
+    
+    stagesConfig.forEach((stage, index) => {
+      const xCenter = xAxis.getPixelForTick(index);
+      const columnWidth = xAxis.width / stagesConfig.length;
+      // Draw a line spanning 80% of the category slot width
+      const left = xCenter - (columnWidth * 0.4);
+      const right = xCenter + (columnWidth * 0.4);
+      const y = yAxis.getPixelForValue(stage.sla);
+
+      if(y >= chartArea.top && y <= chartArea.bottom) {
+        ctx.beginPath();
+        ctx.moveTo(left, y);
+        ctx.lineTo(right, y);
+        ctx.stroke();
+      }
+    });
+
+    // 2. Draw Value Labels on top of bars
+    ctx.setLineDash([]);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.font = '600 11px "Segoe UI"';
+
+    chart.data.datasets.forEach((dataset, i) => {
+      const meta = chart.getDatasetMeta(i);
+      if (meta.hidden || dataset.type === 'line') return;
+
+      meta.data.forEach((bar, index) => {
+        const value = dataset.data[index];
+        if (value === null || value === undefined || isNaN(value)) return;
+
+        ctx.fillStyle = dataset.backgroundColor; 
+        // Display number slightly above the bar
+        ctx.fillText(value + 'd', bar.x, bar.y - 4);
+      });
+    });
+
+    ctx.restore();
+  }
+};
+
+Chart.register(slaAndLabelsPlugin);
+
+document.addEventListener('DOMContentLoaded', function() {
   // Fluent colors
   const colorRed = '#d13438';
   const colorYellow = '#f5a623';
-  const colorGreen = '#107c10';
 
-  regions.forEach((region, ri) => {
-    const ctx = document.getElementById(canvasIds[ri]);
+  phaseChartsConfig.forEach((config) => {
+    const ctx = document.getElementById(config.id);
     if (!ctx) return;
 
-    const cases = regionData[region];
-    const maxDaysInRegion = Math.max(...cases.map(c => c.days), 25);
-    
-    // Массивы для хранения медиан групп
-    const failedData = [];
-    const warningData = [];
-
-    pipelineStages.forEach(stage => {
-      // 1. Берем все кейсы для конкретной стадии
-      const stageCases = cases.filter(c => c.si === stage.name);
-      
-      // 2. Разбиваем кейсы на группы в зависимости от SLA
-      const failedCases = stageCases.filter(c => c.days > stage.sla).map(c => c.days);
-      const warningCases = stageCases.filter(c => c.days >= stage.sla - 3 && c.days <= stage.sla).map(c => c.days);
-      
-      // Функция для расчета точной медианы из массива
-      const getMedian = (arr) => {
-        if (arr.length === 0) return null;
-        arr.sort((a, b) => a - b);
-        const mid = Math.floor(arr.length / 2);
-        return arr.length % 2 !== 0 ? arr[mid] : (arr[mid - 1] + arr[mid]) / 2;
-      };
-
-      // 3. Считаем медиану для каждой группы и добавляем в датасеты
-      failedData.push(getMedian(failedCases));
-      warningData.push(getMedian(warningCases));
-    });
+    const labels = config.stages.map(s => s.name);
+    const slaData = config.stages.map(s => s.sla);
+    const maxDaysInPhase = Math.max(...config.failed, ...slaData);
 
     new Chart(ctx, {
+      type: 'bar',
       data: {
-        labels: stageShort,
+        labels: labels,
+        stagesConfig: config.stages,
         datasets: [
           {
             type: 'line',
             label: 'SLA Limit',
-            data: pipelineStages.map(s => s.sla),
+            data: slaData,
             borderColor: '#616161',
             borderWidth: 2,
             borderDash: [5, 5],
-            pointRadius: 0, // Прячем точки, чтобы выглядело как линия
+            pointRadius: 0, 
             fill: false,
-            order: 0 // Линия поверх столбцов
+            order: 0 
           },
           {
-            type: 'bar',
             label: 'Failed',
-            data: failedData,
+            data: config.failed,
             backgroundColor: colorRed,
             borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
-            order: 1 
+            order: 1
           },
           {
-            type: 'bar',
             label: 'Warning',
-            data: warningData,
+            data: config.warning,
             backgroundColor: colorYellow,
             borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
             order: 1
@@ -589,7 +624,7 @@ document.addEventListener('DOMContentLoaded', function() {
             ticks: {
               color: '#616161',
               font: { family: 'Segoe UI', size: 10 },
-              maxRotation: 14,
+              maxRotation: 15,
               autoSkip: false,
             },
             grid: { display: false },
@@ -597,7 +632,8 @@ document.addEventListener('DOMContentLoaded', function() {
           },
           y: {
             min: 0,
-            max: Math.ceil(maxDaysInRegion / 5) * 5 + 2,
+            // Added extra padding on top (+ 6) so labels don't get cut off
+            max: Math.ceil(maxDaysInPhase / 5) * 5 + 6,
             ticks: {
               color: '#616161',
               font: { family: 'Segoe UI', size: 10 },
