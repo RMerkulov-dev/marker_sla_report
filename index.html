@@ -17,7 +17,7 @@
     --accent: #0f6cbd;      /* Brand / Primary */
     --accent-hover: #115ea3;
     --red: #d13438;         /* Error / Severe */
-    --yellow: #d83b01;      /* Warning */
+    --yellow: #f5a623;      /* Warning (Yellow) */
     --green: #107c10;       /* Success */
     
     /* Text */
@@ -192,7 +192,7 @@
   .panel-subtitle { font-size: 12px; color: var(--muted); margin-top: 4px; }
   .panel-body { padding: 20px; }
 
-  /* Scatter Grid */
+  /* Scatter/Combo Grid */
   .scatter-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -210,7 +210,7 @@
 
   /* Legend */
   .legend-item { display: flex; align-items: center; gap: 6px; }
-  .legend-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
   .legend-lbl { font-size: 12px; color: var(--text); }
 
   /* Fluent Tables */
@@ -238,12 +238,12 @@
     display: inline-block;
   }
   .sla-pill.red { background: #fdf3f4; color: var(--red); border: 1px solid #f9d9db; }
-  .sla-pill.yellow { background: #fff8f0; color: var(--yellow); border: 1px solid #ffdfb3; }
+  .sla-pill.yellow { background: #fff8eb; color: #b27b16; border: 1px solid #fce8b3; }
   .sla-pill.ok { background: #f0f9f0; color: var(--green); border: 1px solid #cce5cc; }
 
   .days-over { font-family: var(--mono); font-size: 14px; font-weight: 600; }
   .days-over.red { color: var(--red); }
-  .days-over.yellow { color: var(--yellow); }
+  .days-over.yellow { color: #b27b16; }
   .days-over.green { color: var(--green); }
 
   /* Footer */
@@ -347,35 +347,39 @@
     </div>
   </div>
 
-  <!-- SCATTER CHARTS -->
+  <!-- COMBO CHARTS -->
   <div class="panel">
     <div class="panel-header">
       <div>
-        <div class="panel-title">Days per Pipeline Stage — Scatter View</div>
-        <div class="panel-subtitle">X axis: Pipeline stage · Y axis: Days spent · Each dot = one case</div>
+        <div class="panel-title">Days per Pipeline Stage — Bottleneck Analysis</div>
+        <div class="panel-subtitle">X axis: Pipeline stage · Y axis: Median days spent · Bars = Median days by status, Dashed line = SLA threshold</div>
       </div>
       <div style="display:flex; gap:16px; align-items:center;">
-        <div class="legend-item"><div class="legend-dot" style="background:var(--red);"></div><span class="legend-lbl">Failed</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red);"></div><span class="legend-lbl">Failed (Median > SLA)</span></div>
         <div class="legend-item"><div class="legend-dot" style="background:var(--yellow);"></div><span class="legend-lbl">Warning</span></div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--green);"></div><span class="legend-lbl">In Progress</span></div>
+        <div class="filter-sep" style="height: 16px;"></div>
+        <div class="legend-item">
+          <div style="width: 20px; height: 2px; border-top: 2px dashed #616161;"></div>
+          <span class="legend-lbl">SLA Threshold</span>
+        </div>
       </div>
     </div>
     <div class="panel-body">
       <div class="scatter-grid">
         <div class="scatter-cell">
-          <div class="scatter-title">📍 Sketch Requested</div>
+          <div class="scatter-title">📍 Shreveport, LA</div>
           <canvas id="sc0" height="160"></canvas>
         </div>
         <div class="scatter-cell">
-          <div class="scatter-title">📍 Sketch Received</div>
+          <div class="scatter-title">📍 Baton Rouge, LA</div>
           <canvas id="sc1" height="160"></canvas>
         </div>
         <div class="scatter-cell">
-          <div class="scatter-title">📍 Sketch Approved</div>
+          <div class="scatter-title">📍 Monroe, LA</div>
           <canvas id="sc2" height="160"></canvas>
         </div>
         <div class="scatter-cell">
-          <div class="scatter-title">📍 Memorial Received</div>
+          <div class="scatter-title">📍 Alexandria, LA</div>
           <canvas id="sc3" height="160"></canvas>
         </div>
       </div>
@@ -482,7 +486,7 @@ const regionData = {
   ],
 };
 
-// Tooltip configuration in Fluent style
+// Tooltip configuration in Fluent style for Bar/Line combos
 const tooltipCfg = {
   backgroundColor: '#ffffff',
   borderColor: '#e1dfdd',
@@ -494,10 +498,12 @@ const tooltipCfg = {
   bodyFont: { family: 'Segoe UI', size: 12 },
   boxPadding: 4,
   callbacks: {
-    title: items => items[0].raw.stage || '',
+    title: items => items[0].label,
     label: item => {
-      const sla = pipelineStages.find(s => s.name === item.raw.stage)?.sla;
-      return ` ${item.dataset.label} · ${item.raw.origDays}d (SLA: ${sla}d)`;
+      if (item.raw === null) return null; // Не показываем тултип, если нет кейсов в группе
+      if (item.dataset.type === 'line') return ` ${item.dataset.label}: ${item.raw}d`;
+      const sla = pipelineStages.find(s => s.name === item.label)?.sla;
+      return ` ${item.dataset.label} Median: ${item.raw}d (SLA limit: ${sla}d)`;
     }
   }
 };
@@ -506,9 +512,9 @@ document.addEventListener('DOMContentLoaded', function() {
   const regions = Object.keys(regionData);
   const canvasIds = ['sc0', 'sc1', 'sc2', 'sc3'];
 
-  // Fluent colors for datasets
+  // Fluent colors
   const colorRed = '#d13438';
-  const colorYellow = '#d83b01';
+  const colorYellow = '#f5a623';
   const colorGreen = '#107c10';
 
   regions.forEach((region, ri) => {
@@ -516,52 +522,82 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!ctx) return;
 
     const cases = regionData[region];
-    const maxDays = Math.max(...cases.map(c => c.days), 25);
+    const maxDaysInRegion = Math.max(...cases.map(c => c.days), 25);
+    
+    // Массивы для хранения медиан групп
+    const failedData = [];
+    const warningData = [];
 
-    const stageTotals = {}, stageCount = {};
-    cases.forEach(c => { stageTotals[c.si] = (stageTotals[c.si] || 0) + 1; });
+    pipelineStages.forEach(stage => {
+      // 1. Берем все кейсы для конкретной стадии
+      const stageCases = cases.filter(c => c.si === stage.name);
+      
+      // 2. Разбиваем кейсы на группы в зависимости от SLA
+      const failedCases = stageCases.filter(c => c.days > stage.sla).map(c => c.days);
+      const warningCases = stageCases.filter(c => c.days >= stage.sla - 3 && c.days <= stage.sla).map(c => c.days);
+      
+      // Функция для расчета точной медианы из массива
+      const getMedian = (arr) => {
+        if (arr.length === 0) return null;
+        arr.sort((a, b) => a - b);
+        const mid = Math.floor(arr.length / 2);
+        return arr.length % 2 !== 0 ? arr[mid] : (arr[mid - 1] + arr[mid]) / 2;
+      };
 
-    const failed = [], warning = [], ok = [];
-    cases.forEach(c => {
-      stageCount[c.si] = (stageCount[c.si] || 0);
-      const total = stageTotals[c.si] || 1;
-      const yJitter = (stageCount[c.si] - (total - 1) / 2) * 0.35;
-      stageCount[c.si]++;
-      const slaThresh = pipelineStages.find(s => s.name === c.si)?.sla ?? 21;
-      const pt = { x: c.si, y: c.days + yJitter, r: 5, origDays: c.days, stage: c.si };
-      if (c.days > slaThresh)           failed.push(pt);
-      else if (c.days >= slaThresh - 3) warning.push(pt);
-      else                              ok.push(pt);
+      // 3. Считаем медиану для каждой группы и добавляем в датасеты
+      failedData.push(getMedian(failedCases));
+      warningData.push(getMedian(warningCases));
     });
 
     new Chart(ctx, {
-      type: 'bubble',
       data: {
+        labels: stageShort,
         datasets: [
-          { label: 'Failed',      data: failed,  backgroundColor: colorRed,  borderColor: colorRed, borderWidth: 1 },
-          { label: 'Warning',     data: warning, backgroundColor: colorYellow, borderColor: colorYellow, borderWidth: 1 },
-          { label: 'In Progress', data: ok,      backgroundColor: colorGreen, borderColor: colorGreen, borderWidth: 1 },
+          {
+            type: 'line',
+            label: 'SLA Limit',
+            data: pipelineStages.map(s => s.sla),
+            borderColor: '#616161',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            pointRadius: 0, // Прячем точки, чтобы выглядело как линия
+            fill: false,
+            order: 0 // Линия поверх столбцов
+          },
+          {
+            type: 'bar',
+            label: 'Failed',
+            data: failedData,
+            backgroundColor: colorRed,
+            borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
+            order: 1 
+          },
+          {
+            type: 'bar',
+            label: 'Warning',
+            data: warningData,
+            backgroundColor: colorYellow,
+            borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
+            order: 1
+          }
         ]
       },
       options: {
         responsive: true,
         scales: {
           x: {
-            type: 'category',
-            labels: stageShort,
-            offset: true,
             ticks: {
               color: '#616161',
               font: { family: 'Segoe UI', size: 10 },
               maxRotation: 14,
               autoSkip: false,
             },
-            grid: { color: 'rgba(0,0,0,0.04)' },
+            grid: { display: false },
             border: { color: '#e1dfdd' },
           },
           y: {
             min: 0,
-            max: Math.ceil(maxDays / 5) * 5 + 4,
+            max: Math.ceil(maxDaysInRegion / 5) * 5 + 2,
             ticks: {
               color: '#616161',
               font: { family: 'Segoe UI', size: 10 },
