@@ -513,40 +513,14 @@ const tooltipCfg = {
   }
 };
 
-// Custom plugin to draw flat SLA thresholds per column and numbers on top of bars
+// Custom plugin to draw numbers on top of bars
 const slaAndLabelsPlugin = {
   id: 'slaAndLabelsPlugin',
   afterDatasetsDraw(chart) {
-    const { ctx, chartArea, scales } = chart;
-    const xAxis = scales.x;
-    const yAxis = scales.y;
-    const stagesConfig = chart.config.data.stagesConfig;
-
+    const { ctx } = chart;
     ctx.save();
     
-    // 1. Draw SLA Lines (Flat per column, not zigzag)
-    ctx.lineWidth = 2;
-    ctx.setLineDash([4, 4]);
-    ctx.strokeStyle = '#616161';
-    
-    stagesConfig.forEach((stage, index) => {
-      const xCenter = xAxis.getPixelForTick(index);
-      const columnWidth = xAxis.width / stagesConfig.length;
-      // Draw a line spanning 80% of the category slot width
-      const left = xCenter - (columnWidth * 0.4);
-      const right = xCenter + (columnWidth * 0.4);
-      const y = yAxis.getPixelForValue(stage.sla);
-
-      if(y >= chartArea.top && y <= chartArea.bottom) {
-        ctx.beginPath();
-        ctx.moveTo(left, y);
-        ctx.lineTo(right, y);
-        ctx.stroke();
-      }
-    });
-
-    // 2. Draw Value Labels on top of bars
-    ctx.setLineDash([]);
+    // Draw Value Labels on top of bars
     ctx.textAlign = 'center';
     ctx.textBaseline = 'bottom';
     ctx.font = '600 11px "Segoe UI"';
@@ -595,9 +569,12 @@ document.addEventListener('DOMContentLoaded', function() {
             label: 'SLA Limit',
             data: slaData,
             borderColor: '#616161',
+            backgroundColor: '#ffffff',
             borderWidth: 2,
             borderDash: [5, 5],
-            pointRadius: 0, 
+            pointRadius: 4, 
+            pointBorderWidth: 2,
+            pointBackgroundColor: '#ffffff',
             fill: false,
             order: 0 
           },
