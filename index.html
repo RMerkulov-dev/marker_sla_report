@@ -16,8 +16,8 @@
     /* Fluent Accent Colors (Brand & Status) */
     --accent: #0f6cbd;      /* Brand / Primary */
     --accent-hover: #115ea3;
-    --red: #d13438;         /* Error / Severe */
-    --yellow: #f5a623;      /* Warning (Yellow) */
+    --red: #e57373;         /* Lighter Red */
+    --yellow: #ffb74d;      /* Lighter Yellow */
     --green: #107c10;       /* Success */
     
     /* Text */
@@ -139,40 +139,7 @@
   /* Main Layout */
   .main { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
 
-  /* KPI Cards */
-  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
-
-  .kpi-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-card);
-    padding: 20px;
-    position: relative;
-    box-shadow: var(--shadow-card);
-  }
-  
-  /* Fluent Color Markers */
-  .kpi-card::before {
-    content: '';
-    position: absolute;
-    top: 16px; bottom: 16px; left: 0;
-    width: 4px;
-    border-radius: 0 4px 4px 0;
-  }
-  .kpi-card.red::before { background: var(--red); }
-  .kpi-card.yellow::before { background: var(--yellow); }
-  .kpi-card.green::before { background: var(--green); }
-  .kpi-card.blue::before { background: var(--accent); }
-
-  .kpi-label { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
-  .kpi-value { font-size: 36px; font-weight: 600; margin-bottom: 8px; color: var(--text); line-height: 1; }
-  
-  .kpi-sub { font-size: 12px; color: var(--muted); }
-  .kpi-delta { font-size: 12px; margin-top: 8px; font-weight: 500; }
-  .kpi-delta.worse { color: var(--red); }
-  .kpi-delta.better { color: var(--green); }
-
-  /* Panels (Charts and Tables Containers) */
+  /* Panels (Charts Containers) */
   .panel {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -211,40 +178,8 @@
   /* Legend */
   .legend-item { display: flex; align-items: center; gap: 6px; }
   .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+  .legend-box { width: 16px; height: 12px; border-radius: 2px; }
   .legend-lbl { font-size: 12px; color: var(--text); }
-
-  /* Fluent Tables */
-  table { width: 100%; border-collapse: collapse; }
-  thead th {
-    text-align: left;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text);
-    padding: 12px 16px;
-    border-bottom: 2px solid var(--border);
-    background: var(--surface);
-  }
-  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.2s; }
-  tbody tr:hover { background: var(--surface2); }
-  tbody td { padding: 12px 16px; font-size: 14px; color: var(--text); }
-  .loc-name { font-weight: 500; }
-  
-  /* Pills & Tags */
-  .sla-pill {
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 600;
-    display: inline-block;
-  }
-  .sla-pill.red { background: #fdf3f4; color: var(--red); border: 1px solid #f9d9db; }
-  .sla-pill.yellow { background: #fff8eb; color: #b27b16; border: 1px solid #fce8b3; }
-  .sla-pill.ok { background: #f0f9f0; color: var(--green); border: 1px solid #cce5cc; }
-
-  .days-over { font-family: var(--mono); font-size: 14px; font-weight: 600; }
-  .days-over.red { color: var(--red); }
-  .days-over.yellow { color: #b27b16; }
-  .days-over.green { color: var(--green); }
 
   /* Footer */
   footer {
@@ -300,18 +235,9 @@
     <select class="filter-select">
       <option value="all">All Milestones</option>
       <option value="sketch_received">Sketch Received</option>
-      <option value="memorial_received">Memorial Received</option>
       <option value="sketch_approved">Sketch Approved</option>
-    </select>
-  </div>
-  <div class="filter-sep"></div>
-  <div class="filter-group">
-    <span class="filter-label">SLA Status</span>
-    <select class="filter-select">
-      <option value="all">All Statuses</option>
-      <option value="red">Failed</option>
-      <option value="yellow">Warning</option>
-      <option value="green">In Progress</option>
+      <option value="memorial_received">Memorial Received</option>
+      <option value="iwo_completed">Installation Work Order Completed</option>
     </select>
   </div>
 </div>
@@ -319,118 +245,42 @@
 <!-- MAIN CONTENT -->
 <div class="main">
 
-  <!-- KPI CARDS -->
-  <div class="kpi-row">
-    <div class="kpi-card red">
-      <div class="kpi-label">Failed SLA</div>
-      <div class="kpi-value">47</div>
-      <div class="kpi-sub">Cases exceeding limits</div>
-      <div class="kpi-delta worse">▲ +8 vs last week</div>
-    </div>
-    <div class="kpi-card yellow">
-      <div class="kpi-label">Warning</div>
-      <div class="kpi-value">23</div>
-      <div class="kpi-sub">Approaching limits</div>
-      <div class="kpi-delta worse">▲ +3 vs last week</div>
-    </div>
-    <div class="kpi-card green">
-      <div class="kpi-label">In Progress</div>
-      <div class="kpi-value">134</div>
-      <div class="kpi-sub">Processing on time</div>
-      <div class="kpi-delta better">▼ −4 vs last week</div>
-    </div>
-    <div class="kpi-card blue">
-      <div class="kpi-label">Total Active Cases</div>
-      <div class="kpi-value">204</div>
-      <div class="kpi-sub">Red River Region</div>
-      <div class="kpi-delta" style="color:var(--muted)">Period: Mar 3–10</div>
-    </div>
-  </div>
-
   <!-- BAR CHARTS -->
   <div class="panel">
     <div class="panel-header">
       <div>
-        <div class="panel-title">Days per Pipeline Stage — Bottleneck Analysis</div>
-        <div class="panel-subtitle">X axis: Pipeline stage · Y axis: Median days spent · Bars = Median days by status, Dashed line = SLA threshold</div>
+        <div class="panel-title">Median SLA by Milestone</div>
+        <div class="panel-subtitle">Y axis: Pipeline stage · X axis: Median days spent · Colored Bars = Median days, Gray Zone = SLA threshold</div>
       </div>
       <div style="display:flex; gap:16px; align-items:center;">
-        <div class="legend-item"><div class="legend-dot" style="background:var(--red);"></div><span class="legend-lbl">Failed (Median > SLA)</span></div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--yellow);"></div><span class="legend-lbl">Warning</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red);"></div><span class="legend-lbl">Failed (Median)</span></div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--yellow);"></div><span class="legend-lbl">Warning (Median)</span></div>
         <div class="filter-sep" style="height: 16px;"></div>
         <div class="legend-item">
-          <div style="width: 20px; height: 2px; border-top: 2px dashed #616161;"></div>
-          <span class="legend-lbl">SLA Threshold</span>
+          <div class="legend-box" style="background:#e1dfdd;"></div>
+          <span class="legend-lbl">SLA Limit (Gray Zone)</span>
         </div>
       </div>
     </div>
     <div class="panel-body">
       <div class="scatter-grid">
         <div class="scatter-cell">
-          <div class="scatter-title">1. Sketch Requested ➔ Sketch Received</div>
-          <canvas id="sc0" height="160"></canvas>
+          <div class="scatter-title">Sketch Received</div>
+          <canvas id="sc0" height="320"></canvas>
         </div>
         <div class="scatter-cell">
-          <div class="scatter-title">2. Sketch Received ➔ Sketch Approved</div>
-          <canvas id="sc1" height="160"></canvas>
+          <div class="scatter-title">Sketch Approved</div>
+          <canvas id="sc1" height="320"></canvas>
         </div>
         <div class="scatter-cell">
-          <div class="scatter-title">3. Sketch Approved ➔ Vendor Confirmation</div>
-          <canvas id="sc2" height="160"></canvas>
+          <div class="scatter-title">Memorial Received</div>
+          <canvas id="sc2" height="320"></canvas>
         </div>
         <div class="scatter-cell">
-          <div class="scatter-title">4. Vendor Confirmation ➔ Memorial Received</div>
-          <canvas id="sc3" height="160"></canvas>
+          <div class="scatter-title">Installation Work Order Completed</div>
+          <canvas id="sc3" height="320"></canvas>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- REGIONAL MATRIX -->
-  <div class="panel">
-    <div class="panel-header">
-      <div>
-        <div class="panel-title">Regional Performance Matrix</div>
-        <div class="panel-subtitle">Highlighting the most problematic stages and critical SLA breaches by region</div>
-      </div>
-    </div>
-    <div class="panel-body" style="padding: 0;">
-      <table>
-        <thead>
-          <tr>
-            <th style="padding-left: 24px;">Location</th>
-            <th>Most Problematic Stage</th>
-            <th style="text-align: center;">Failed SLAs</th>
-            <th style="text-align: right; padding-right: 24px;">Max Days in Stage</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="loc-name" style="padding-left: 24px;">Shreveport, LA</td>
-            <td>In Production</td>
-            <td style="text-align: center;"><span class="sla-pill red">4 cases</span></td>
-            <td style="text-align: right; padding-right: 24px;"><span class="days-over red">29d</span></td>
-          </tr>
-          <tr>
-            <td class="loc-name" style="padding-left: 24px;">Baton Rouge, LA</td>
-            <td>Awaiting Family Approval</td>
-            <td style="text-align: center;"><span class="sla-pill red">4 cases</span></td>
-            <td style="text-align: right; padding-right: 24px;"><span class="days-over red">26d</span></td>
-          </tr>
-          <tr>
-            <td class="loc-name" style="padding-left: 24px;">Monroe, LA</td>
-            <td>In Design</td>
-            <td style="text-align: center;"><span class="sla-pill red">3 cases</span></td>
-            <td style="text-align: right; padding-right: 24px;"><span class="days-over red">25d</span></td>
-          </tr>
-          <tr>
-            <td class="loc-name" style="padding-left: 24px;">Alexandria, LA</td>
-            <td>Vendor PO Created</td>
-            <td style="text-align: center;"><span class="sla-pill red">2 cases</span></td>
-            <td style="text-align: right; padding-right: 24px;"><span class="days-over red">23d</span></td>
-          </tr>
-        </tbody>
-      </table>
     </div>
   </div>
 
@@ -444,7 +294,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-// Phase charts configuration based on the new schema
+// Phase charts configuration based on the new schema (now including case counts)
 const phaseChartsConfig = [
   {
     id: 'sc0',
@@ -455,7 +305,9 @@ const phaseChartsConfig = [
       { name: 'Sketch Received', sla: 2 }
     ],
     failed: [6.5, 14, 7.5, 4],
-    warning: [4, 9, 3.5, 2]
+    failedCounts: [12, 28, 15, 8],
+    warning: [4, 9, 3.5, 2],
+    warningCounts: [5, 12, 8, 4]
   },
   {
     id: 'sc1',
@@ -466,7 +318,9 @@ const phaseChartsConfig = [
       { name: 'Sketch Approved', sla: 2 }
     ],
     failed: [4, 5.5, 18, 4.5],
-    warning: [1.5, 2.5, 13, 1.5]
+    failedCounts: [9, 11, 35, 10],
+    warning: [1.5, 2.5, 13, 1.5],
+    warningCounts: [4, 6, 18, 5]
   },
   {
     id: 'sc2',
@@ -476,7 +330,9 @@ const phaseChartsConfig = [
       { name: 'Vendor Confirmation', sla: 3 }
     ],
     failed: [5, 7, 5],
-    warning: [2, 2.5, 2.5]
+    failedCounts: [14, 22, 16],
+    warning: [2, 2.5, 2.5],
+    warningCounts: [7, 9, 8]
   },
   {
     id: 'sc3',
@@ -487,11 +343,13 @@ const phaseChartsConfig = [
       { name: 'Memorial Received', sla: 2 }
     ],
     failed: [5.5, 28, 11, 4.5],
-    warning: [2.5, 20, 6, 2]
+    failedCounts: [15, 42, 20, 12],
+    warning: [2.5, 20, 6, 2],
+    warningCounts: [8, 19, 10, 6]
   }
 ];
 
-// Tooltip configuration in Fluent style
+// Unified Grouped Tooltip configuration
 const tooltipCfg = {
   backgroundColor: '#ffffff',
   borderColor: '#e1dfdd',
@@ -505,50 +363,66 @@ const tooltipCfg = {
   callbacks: {
     title: items => items[0].label,
     label: item => {
-      if (item.raw === null || item.dataset.type === 'line') return null; // Hide if no data or line
-      const stagesConfig = item.chart.config.data.stagesConfig;
-      const sla = stagesConfig[item.dataIndex].sla;
-      return ` ${item.dataset.label} Median: ${item.raw}d (SLA limit: ${sla}d)`;
+      if (item.raw === null || item.raw === undefined) return null;
+      
+      if (item.dataset.label === 'SLA Limit') {
+        return `SLA Limit: ${item.raw}d`;
+      }
+
+      // Fetch the specific case count from the dataset
+      const count = item.dataset.counts ? item.dataset.counts[item.dataIndex] : 0;
+      return `${item.dataset.label}: ${item.raw}d (${count} cases)`;
     }
   }
 };
 
-// Custom plugin to draw numbers on top of bars
-const slaAndLabelsPlugin = {
-  id: 'slaAndLabelsPlugin',
-  afterDatasetsDraw(chart) {
-    const { ctx } = chart;
+// Custom plugin to draw the background gray zone (SLA limit indicator)
+const horizontalSlaPlugin = {
+  id: 'horizontalSlaPlugin',
+  beforeDatasetsDraw(chart) {
+    const { ctx, chartArea, scales } = chart;
+    const xAxis = scales.x;
+    const yAxis = scales.y;
+    const stagesConfig = chart.config.data.stagesConfig;
+
     ctx.save();
-    
-    // Draw Value Labels on top of bars
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
-    ctx.font = '600 11px "Segoe UI"';
+    ctx.fillStyle = '#e1dfdd'; // Light gray for SLA zone
 
-    chart.data.datasets.forEach((dataset, i) => {
-      const meta = chart.getDatasetMeta(i);
-      if (meta.hidden || dataset.type === 'line') return;
+    stagesConfig.forEach((stage, index) => {
+      const yCenter = yAxis.getPixelForTick(index);
+      const tickHeight = (chartArea.bottom - chartArea.top) / stagesConfig.length;
+      
+      // Gray zone height slightly larger than the category bars
+      const height = tickHeight * 0.85; 
+      const top = yCenter - (height / 2);
+      
+      const startX = xAxis.getPixelForValue(0);
+      const endX = xAxis.getPixelForValue(stage.sla);
+      let width = endX - startX;
+      if (width < 0) width = 0;
 
-      meta.data.forEach((bar, index) => {
-        const value = dataset.data[index];
-        if (value === null || value === undefined || isNaN(value)) return;
-
-        ctx.fillStyle = dataset.backgroundColor; 
-        // Display number slightly above the bar
-        ctx.fillText(value + 'd', bar.x, bar.y - 4);
-      });
+      // Draw rounded rectangle for SLA zone
+      ctx.beginPath();
+      const radius = 4;
+      ctx.moveTo(startX, top);
+      ctx.lineTo(startX + width - radius, top);
+      ctx.quadraticCurveTo(startX + width, top, startX + width, top + radius);
+      ctx.lineTo(startX + width, top + height - radius);
+      ctx.quadraticCurveTo(startX + width, top + height, startX + width - radius, top + height);
+      ctx.lineTo(startX, top + height);
+      ctx.closePath();
+      ctx.fill();
     });
-
     ctx.restore();
   }
 };
 
-Chart.register(slaAndLabelsPlugin);
+Chart.register(horizontalSlaPlugin);
 
 document.addEventListener('DOMContentLoaded', function() {
-  // Fluent colors
-  const colorRed = '#d13438';
-  const colorYellow = '#f5a623';
+  // Lighter bar colors
+  const colorRed = '#e57373';
+  const colorYellow = '#ffb74d';
 
   phaseChartsConfig.forEach((config) => {
     const ctx = document.getElementById(config.id);
@@ -565,52 +439,44 @@ document.addEventListener('DOMContentLoaded', function() {
         stagesConfig: config.stages,
         datasets: [
           {
-            type: 'line',
-            label: 'SLA Limit',
-            data: slaData,
-            borderColor: '#616161',
-            backgroundColor: '#ffffff',
-            borderWidth: 2,
-            borderDash: [5, 5],
-            pointRadius: 4, 
-            pointBorderWidth: 2,
-            pointBackgroundColor: '#ffffff',
-            fill: false,
-            order: 0 
-          },
-          {
             label: 'Failed',
             data: config.failed,
+            counts: config.failedCounts, // Bind cases counts to dataset
             backgroundColor: colorRed,
-            borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
-            order: 1
+            borderRadius: { topRight: 4, bottomRight: 4, topLeft: 0, bottomLeft: 0 },
+            categoryPercentage: 0.7, 
+            barPercentage: 0.9
           },
           {
             label: 'Warning',
             data: config.warning,
+            counts: config.warningCounts, // Bind cases counts to dataset
             backgroundColor: colorYellow,
-            borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
-            order: 1
+            borderRadius: { topRight: 4, bottomRight: 4, topLeft: 0, bottomLeft: 0 },
+            categoryPercentage: 0.7,
+            barPercentage: 0.9
+          },
+          // Hidden transparent dataset specifically to feed the SLA limit into the group tooltip
+          {
+            label: 'SLA Limit',
+            data: slaData,
+            backgroundColor: '#e1dfdd',
+            barThickness: 0, 
+            hoverBackgroundColor: '#e1dfdd'
           }
         ]
       },
       options: {
         responsive: true,
+        indexAxis: 'y', 
+        interaction: {
+          mode: 'index',
+          intersect: false, // Allows tooltip to appear anywhere along the row
+        },
         scales: {
           x: {
-            ticks: {
-              color: '#616161',
-              font: { family: 'Segoe UI', size: 10 },
-              maxRotation: 15,
-              autoSkip: false,
-            },
-            grid: { display: false },
-            border: { color: '#e1dfdd' },
-          },
-          y: {
             min: 0,
-            // Added extra padding on top (+ 6) so labels don't get cut off
-            max: Math.ceil(maxDaysInPhase / 5) * 5 + 6,
+            max: Math.ceil(maxDaysInPhase / 5) * 5 + 10,
             ticks: {
               color: '#616161',
               font: { family: 'Segoe UI', size: 10 },
@@ -619,7 +485,16 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             grid: { color: 'rgba(0,0,0,0.04)' },
             border: { color: '#e1dfdd' },
-            title: { display: true, text: 'Days', color: '#616161', font: { size: 10, family: 'Segoe UI' } },
+            title: { display: true, text: 'Median Days', color: '#616161', font: { size: 11, family: 'Segoe UI', weight: '600' } },
+          },
+          y: {
+            ticks: {
+              color: '#616161',
+              font: { family: 'Segoe UI', size: 10 },
+              autoSkip: false,
+            },
+            grid: { display: false },
+            border: { color: '#e1dfdd' },
           }
         },
         plugins: {
