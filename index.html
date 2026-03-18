@@ -160,31 +160,17 @@
   .panel-subtitle { font-size: 12px; color: var(--muted); margin-top: 4px; }
   .panel-body { padding: 24px 20px; }
 
-  /* Scatter/Combo Grid */
-  .scatter-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 32px;
-  }
-  .scatter-cell { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 16px; 
+  /* Grid Layout for Single Chart */
+  .chart-full-width {
+    width: 100%;
     min-width: 0;
   }
-  .scatter-title {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text);
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--surface2);
-  }
 
-  /* CHART WRAPPER - VERY IMPORTANT FOR RESPONSIVENESS */
+  /* CHART WRAPPER */
   .chart-container {
     position: relative;
     width: 100%;
-    height: 260px;
+    height: 500px;
   }
 
   /* Legend */
@@ -246,8 +232,8 @@
   <div class="filter-sep"></div>
   <div class="filter-group">
     <span class="filter-label">Milestone</span>
-    <select class="filter-select">
-      <option value="all">All Milestones</option>
+    <select class="filter-select" id="milestoneFilter">
+      <option value="all" selected>All Milestones</option>
       <option value="sketch_received">Sketch Received</option>
       <option value="sketch_approved">Sketch Approved</option>
       <option value="memorial_received">Memorial Received</option>
@@ -259,39 +245,22 @@
 <!-- MAIN CONTENT -->
 <div class="main">
 
-  <!-- BAR CHARTS WITH SLA LINE -->
+  <!-- SINGLE CONSOLIDATED CHART PANEL -->
   <div class="panel">
     <div class="panel-header">
       <div>
-        <div class="panel-title">Median Days vs Benchmark & SLA</div>
-        <div class="panel-subtitle">Y axis: Days · Red Bars = Median Days, Red Dashed = SLA Limit, Blue Dashed = Overall Median</div>
+        <div class="panel-title" id="panelTitle">Consolidated Median Days & SLA</div>
+  
       </div>
       <div style="display:flex; gap:16px; align-items:center;">
-        <div class="legend-item"><div class="legend-box" style="background:rgba(229, 115, 115, 0.5);"></div><span class="legend-lbl">Current Median</span></div>
-        <div class="filter-sep" style="height: 16px;"></div>
         <div class="legend-item"><div class="legend-line dashed-red"></div><span class="legend-lbl">SLA Limit</span></div>
         <div class="filter-sep" style="height: 16px;"></div>
         <div class="legend-item"><div class="legend-line dashed-blue"></div><span class="legend-lbl">Overall Median</span></div>
       </div>
     </div>
     <div class="panel-body">
-      <div class="scatter-grid">
-        <div class="scatter-cell">
-          <div class="scatter-title">Milestone: Sketch Received</div>
-          <div class="chart-container"><canvas id="sc0"></canvas></div>
-        </div>
-        <div class="scatter-cell">
-          <div class="scatter-title">Milestone: Sketch Approved</div>
-          <div class="chart-container"><canvas id="sc1"></canvas></div>
-        </div>
-        <div class="scatter-cell">
-          <div class="scatter-title">Milestone: Memorial Received</div>
-          <div class="chart-container"><canvas id="sc2"></canvas></div>
-        </div>
-        <div class="scatter-cell">
-          <div class="scatter-title">Milestone: Installation Work Order Completed</div>
-          <div class="chart-container"><canvas id="sc3"></canvas></div>
-        </div>
+      <div class="chart-full-width">
+        <div class="chart-container"><canvas id="mainChart"></canvas></div>
       </div>
     </div>
   </div>
@@ -306,198 +275,232 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-// Data Configuration with Stage SLA and Overall Median benchmark
-const stageTrendsConfig = [
-  {
-    id: 'sc0',
+// Data Configuration
+const stageTrendsConfig = {
+  'sketch_received': {
+    title: 'Milestone: Sketch Received',
     stages: [
-      { name: 'Sketch Requested', sla: 5, avg: 4.2 },
-      { name: 'Sketch Received', sla: 10, avg: 8.5 },
-      { name: 'Sketch Approved', sla: 2, avg: 3.1 }
+      { name: 'Sketch Requested', sla: 5, avg: 7.2 },
+      { name: 'Sketch Received', sla: 10, avg: 13.5 },
+      { name: 'Sketch Approved', sla: 2, avg: 4.1 }
     ],
-    medianData: [8, 16, 6.5],
+    medianData: [10, 20, 8.5],
     casesData: [120, 85, 45]
   },
-  {
-    id: 'sc1',
+  'sketch_approved': {
+    title: 'Milestone: Sketch Approved',
     stages: [
-      { name: 'Sketch Received', sla: 2, avg: 1.8 },
-      { name: 'Sketch Approved', sla: 2, avg: 3.5 }
+      { name: 'Sketch Received', sla: 2, avg: 4.8 },
+      { name: 'Sketch Approved', sla: 2, avg: 4.5 }
     ],
-    medianData: [5, 7],
+    medianData: [8, 10],
     casesData: [92, 40]
   },
-  {
-    id: 'sc2',
+  'memorial_received': {
+    title: 'Milestone: Memorial Received',
     stages: [
-      { name: 'Vendor Confirmation', sla: 2, avg: 2.4 },
-      { name: 'Memorial Received', sla: 3, avg: 4.8 },
-      { name: 'IWO Submitted', sla: 3, avg: 3.2 }
+      { name: 'Vendor Confirmation', sla: 2, avg: 3.4 },
+      { name: 'Memorial Received', sla: 3, avg: 5.8 },
+      { name: 'IWO Submitted', sla: 3, avg: 4.2 }
     ],
-    medianData: [3.5, 8, 5],
+    medianData: [6, 12, 9],
     casesData: [45, 38, 30]
   },
-  {
-    id: 'sc3',
+  'iwo_completed': {
+    title: 'Milestone: Installation Work Order Completed',
     stages: [
-      { name: 'Vendor Confirmation', sla: 3, avg: 4.1 },
-      { name: 'Memorial Received', sla: 21, avg: 24.5 },
-      { name: 'IWO Submitted', sla: 7, avg: 8.2 },
-      { name: 'IWO Completed', sla: 2, avg: 2.8 }
+      { name: 'Vendor Confirmation', sla: 3, avg: 5.1 },
+      { name: 'Memorial Received', sla: 21, avg: 26.5 },
+      { name: 'IWO Submitted', sla: 7, avg: 10.2 },
+      { name: 'IWO Completed', sla: 2, avg: 4.8 }
     ],
-    medianData: [6, 34, 12, 4],
+    medianData: [8, 40, 15, 7],
     casesData: [15, 42, 20, 12]
   }
-];
+};
 
-// Custom Plugin to draw multiple horizontal benchmark lines (SLA and Overall Avg)
+// Benchmark plugin
 const benchmarkLinesPlugin = {
   id: 'benchmarkLinesPlugin',
   afterDatasetsDraw(chart) {
     const { ctx, chartArea, scales } = chart;
     const yAxis = scales.y;
-    
     const stagesConfig = chart.config.data.stagesConfig;
     if (!stagesConfig) return;
 
     ctx.save();
-    
     const meta = chart.getDatasetMeta(0);
     
     meta.data.forEach((bar, index) => {
       const config = stagesConfig[index];
+      if (!config) return;
+      
       const xCenter = bar.x;
       const width = bar.width;
       const padding = 12;
       const startX = xCenter - (width / 2) - padding;
       const endX = xCenter + (width / 2) + padding;
 
-      // 1. Draw SLA Line (RED)
+      // 1. SLA Line (Red Dashed)
       const ySla = yAxis.getPixelForValue(config.sla);
       if (ySla >= chartArea.top && ySla <= chartArea.bottom) {
         ctx.beginPath();
         ctx.setLineDash([4, 4]);
-        ctx.strokeStyle = '#d13438'; // Severe Red
+        ctx.strokeStyle = '#d13438';
         ctx.lineWidth = 2;
         ctx.moveTo(startX, ySla);
         ctx.lineTo(endX, ySla);
         ctx.stroke();
       }
 
-      // 2. Draw Overall Median Line (BLUE)
+      // 2. Overall Median Line (Blue Dashed)
       const yAvg = yAxis.getPixelForValue(config.avg);
       if (yAvg >= chartArea.top && yAvg <= chartArea.bottom) {
         ctx.beginPath();
         ctx.setLineDash([4, 4]);
-        ctx.strokeStyle = '#0f6cbd'; // Fluent Blue
+        ctx.strokeStyle = '#0f6cbd';
         ctx.lineWidth = 2;
         ctx.moveTo(startX, yAvg);
         ctx.lineTo(endX, yAvg);
         ctx.stroke();
       }
     });
-    
     ctx.restore();
   }
 };
 
 Chart.register(benchmarkLinesPlugin);
 
-// Tooltip configuration 
-const tooltipCfg = {
-  backgroundColor: '#ffffff',
-  borderColor: '#e1dfdd',
-  borderWidth: 1,
-  titleColor: '#242424',
-  bodyColor: '#616161',
-  padding: 12,
-  titleFont: { family: 'Segoe UI', size: 13, weight: '600' },
-  bodyFont: { family: 'Segoe UI', size: 12 },
-  boxPadding: 4,
-  callbacks: {
-    title: items => items[0].label,
-    label: item => {
-      if (item.raw === null || item.raw === undefined) return null;
-      const config = item.chart.config.data.stagesConfig[item.dataIndex];
-      const cases = item.dataset.cases[item.dataIndex];
-      
-      return [
-        ` Total Cases: ${cases}`,
-        ` Current Median: ${item.raw}d`,
-        ` Overall Median: ${config.avg}d`,
-        ` SLA Limit: ${config.sla}d`
-      ];
-    }
+let mainChart = null;
+
+function renderChart(filterValue) {
+  let combinedStages = [];
+  let combinedMedian = [];
+  let combinedCases = [];
+  let currentTitle = "Consolidated Median Days & SLA";
+
+  if (filterValue === 'all') {
+    const seenStages = new Set();
+    
+    // Iterate through all milestones to collect unique stages
+    Object.keys(stageTrendsConfig).forEach(key => {
+      const config = stageTrendsConfig[key];
+      config.stages.forEach((stage, idx) => {
+        // Remove duplicates by stage name to maintain a clean linear flow
+        if (!seenStages.has(stage.name)) {
+          seenStages.add(stage.name);
+          combinedStages.push(stage);
+          combinedMedian.push(config.medianData[idx]);
+          combinedCases.push(config.casesData[idx]);
+        }
+      });
+    });
+  } else if (stageTrendsConfig[filterValue]) {
+    const config = stageTrendsConfig[filterValue];
+    combinedStages = config.stages;
+    combinedMedian = config.medianData;
+    combinedCases = config.casesData;
+    currentTitle = config.title;
   }
-};
+
+  document.getElementById('panelTitle').innerText = currentTitle;
+
+  const labels = combinedStages.map(s => s.name);
+  const benchmarkValues = combinedStages.flatMap(s => [s.sla, s.avg]);
+  const maxDays = Math.max(...combinedMedian, ...benchmarkValues);
+
+  const ctx = document.getElementById('mainChart').getContext('2d');
+
+  if (mainChart) {
+    mainChart.destroy();
+  }
+
+  mainChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      stagesConfig: combinedStages,
+      datasets: [{
+        label: 'Median Days',
+        data: combinedMedian,
+        cases: combinedCases,
+        backgroundColor: 'rgba(229, 115, 115, 0.5)',
+        borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
+        barPercentage: 0.6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: {
+          grid: { display: false },
+          border: { color: '#e1dfdd' },
+          ticks: {
+            color: '#616161',
+            font: { family: 'Segoe UI', size: 11, weight: '500' },
+            maxRotation: 45,
+            minRotation: 0,
+            autoSkip: false
+          }
+        },
+        y: {
+          min: 0,
+          max: Math.ceil(maxDays / 5) * 5 + 2,
+          ticks: {
+            color: '#616161',
+            font: { family: 'Segoe UI', size: 10 },
+            callback: v => v + 'd',
+            stepSize: 5,
+          },
+          grid: { color: 'rgba(0,0,0,0.04)' },
+          border: { display: false },
+          title: { display: true, text: 'Days', color: '#616161', font: { size: 10, family: 'Segoe UI' } },
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#ffffff',
+          borderColor: '#e1dfdd',
+          borderWidth: 1,
+          titleColor: '#242424',
+          bodyColor: '#616161',
+          padding: 12,
+          titleFont: { family: 'Segoe UI', size: 13, weight: '600' },
+          bodyFont: { family: 'Segoe UI', size: 12 },
+          boxPadding: 4,
+          callbacks: {
+            title: items => items[0].label,
+            label: item => {
+              if (item.raw === null || item.raw === undefined) return null;
+              const config = item.chart.config.data.stagesConfig[item.dataIndex];
+              const cases = item.dataset.cases[item.dataIndex];
+              return [
+                ` Total Cases: ${cases}`,
+                ` Current Median: ${item.raw}d`,
+                ` Overall Median: ${config.avg}d`,
+                ` SLA Limit: ${config.sla}d`
+              ];
+            }
+          }
+        }
+      },
+      animation: { duration: 700 }
+    }
+  });
+}
 
 document.addEventListener('DOMContentLoaded', function() {
-  const colorLightRedTransparent = 'rgba(229, 115, 115, 0.5)';
+  const milestoneFilter = document.getElementById('milestoneFilter');
+  
+  // Initial render with All Milestones
+  renderChart(milestoneFilter.value);
 
-  stageTrendsConfig.forEach((config) => {
-    const ctx = document.getElementById(config.id);
-    if (!ctx) return;
-
-    const labels = config.stages.map(s => s.name);
-    const benchmarkValues = config.stages.flatMap(s => [s.sla, s.avg]);
-    
-    const maxDays = Math.max(...config.medianData, ...benchmarkValues);
-
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        stagesConfig: config.stages,
-        datasets: [
-          {
-            label: 'Median Days',
-            data: config.medianData,
-            cases: config.casesData,
-            backgroundColor: colorLightRedTransparent,
-            borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
-            barPercentage: 0.6 
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-          mode: 'index',
-          intersect: false, 
-        },
-        scales: {
-          x: {
-            grid: { display: false },
-            border: { color: '#e1dfdd' },
-            ticks: {
-              color: '#616161',
-              font: { family: 'Segoe UI', size: 11, weight: '500' },
-              maxRotation: 15,
-              autoSkip: false
-            }
-          },
-          y: {
-            min: 0,
-            max: Math.ceil(maxDays / 5) * 5 + 2,
-            ticks: {
-              color: '#616161',
-              font: { family: 'Segoe UI', size: 10 },
-              callback: v => v + 'd',
-              stepSize: 5,
-            },
-            grid: { color: 'rgba(0,0,0,0.04)' },
-            border: { display: false },
-            title: { display: true, text: 'Days', color: '#616161', font: { size: 10, family: 'Segoe UI' } },
-          }
-        },
-        plugins: {
-          legend: { display: false },
-          tooltip: tooltipCfg,
-        },
-        animation: { duration: 700 },
-      }
-    });
+  // Filter change listener
+  milestoneFilter.addEventListener('change', (e) => {
+    renderChart(e.target.value);
   });
 });
 </script>
