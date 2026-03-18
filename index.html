@@ -14,9 +14,10 @@
     --border-hover: #c8c6c4;
     
     /* Fluent Accent Colors (Brand & Status) */
-    --accent: #0f6cbd;      /* Brand / Primary */
+    --accent: #0f6cbd;      /* Brand / Primary (Blue) */
     --accent-hover: #115ea3;
     --red: #e57373;         /* Lighter Red */
+    --severe-red: #d13438;  /* Target Red */
     --yellow: #ffb74d;      /* Lighter Yellow */
     --green: #107c10;       /* Success */
     
@@ -139,7 +140,7 @@
   /* Main Layout */
   .main { padding: 24px; display: flex; flex-direction: column; gap: 20px; }
 
-  /* Panels (Charts Containers) */
+  /* Panels */
   .panel {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -157,28 +158,41 @@
   }
   .panel-title { font-size: 16px; font-weight: 600; color: var(--text); }
   .panel-subtitle { font-size: 12px; color: var(--muted); margin-top: 4px; }
-  .panel-body { padding: 20px; }
+  .panel-body { padding: 24px 20px; }
 
   /* Scatter/Combo Grid */
   .scatter-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 24px;
+    gap: 32px;
   }
-  .scatter-cell { display: flex; flex-direction: column; gap: 12px; }
+  .scatter-cell { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 16px; 
+    min-width: 0;
+  }
   .scatter-title {
     font-size: 14px;
     font-weight: 600;
     color: var(--text);
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--surface2);
+  }
+
+  /* CHART WRAPPER - VERY IMPORTANT FOR RESPONSIVENESS */
+  .chart-container {
+    position: relative;
+    width: 100%;
+    height: 260px;
   }
 
   /* Legend */
   .legend-item { display: flex; align-items: center; gap: 6px; }
-  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
-  .legend-box { width: 16px; height: 12px; border-radius: 2px; }
+  .legend-line { width: 20px; height: 3px; border-radius: 2px; }
+  .legend-box { width: 14px; height: 14px; border-radius: 2px; }
+  .legend-line.dashed-red { border-top: 2px dashed var(--severe-red); height: 0; background: transparent; width: 20px; }
+  .legend-line.dashed-blue { border-top: 2px dashed var(--accent); height: 0; background: transparent; width: 20px; }
   .legend-lbl { font-size: 12px; color: var(--text); }
 
   /* Footer */
@@ -245,40 +259,38 @@
 <!-- MAIN CONTENT -->
 <div class="main">
 
-  <!-- BAR CHARTS -->
+  <!-- BAR CHARTS WITH SLA LINE -->
   <div class="panel">
     <div class="panel-header">
       <div>
-        <div class="panel-title">Median SLA by Milestone</div>
-        <div class="panel-subtitle">Y axis: Pipeline stage · X axis: Median days spent · Colored Bars = Median days, Gray Zone = SLA threshold</div>
+        <div class="panel-title">Median Days vs Benchmark & SLA</div>
+        <div class="panel-subtitle">Y axis: Days · Red Bars = Median Days, Red Dashed = SLA Limit, Blue Dashed = Overall Median</div>
       </div>
       <div style="display:flex; gap:16px; align-items:center;">
-        <div class="legend-item"><div class="legend-dot" style="background:var(--red);"></div><span class="legend-lbl">Failed (Median)</span></div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--yellow);"></div><span class="legend-lbl">Warning (Median)</span></div>
+        <div class="legend-item"><div class="legend-box" style="background:rgba(229, 115, 115, 0.5);"></div><span class="legend-lbl">Current Median</span></div>
         <div class="filter-sep" style="height: 16px;"></div>
-        <div class="legend-item">
-          <div class="legend-box" style="background:#e1dfdd;"></div>
-          <span class="legend-lbl">SLA Limit (Gray Zone)</span>
-        </div>
+        <div class="legend-item"><div class="legend-line dashed-red"></div><span class="legend-lbl">SLA Limit</span></div>
+        <div class="filter-sep" style="height: 16px;"></div>
+        <div class="legend-item"><div class="legend-line dashed-blue"></div><span class="legend-lbl">Overall Median</span></div>
       </div>
     </div>
     <div class="panel-body">
       <div class="scatter-grid">
         <div class="scatter-cell">
-          <div class="scatter-title">Sketch Received</div>
-          <canvas id="sc0" height="320"></canvas>
+          <div class="scatter-title">Milestone: Sketch Received</div>
+          <div class="chart-container"><canvas id="sc0"></canvas></div>
         </div>
         <div class="scatter-cell">
-          <div class="scatter-title">Sketch Approved</div>
-          <canvas id="sc1" height="320"></canvas>
+          <div class="scatter-title">Milestone: Sketch Approved</div>
+          <div class="chart-container"><canvas id="sc1"></canvas></div>
         </div>
         <div class="scatter-cell">
-          <div class="scatter-title">Memorial Received</div>
-          <canvas id="sc2" height="320"></canvas>
+          <div class="scatter-title">Milestone: Memorial Received</div>
+          <div class="chart-container"><canvas id="sc2"></canvas></div>
         </div>
         <div class="scatter-cell">
-          <div class="scatter-title">Installation Work Order Completed</div>
-          <canvas id="sc3" height="320"></canvas>
+          <div class="scatter-title">Milestone: Installation Work Order Completed</div>
+          <div class="chart-container"><canvas id="sc3"></canvas></div>
         </div>
       </div>
     </div>
@@ -294,62 +306,104 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
-// Phase charts configuration based on the new schema (now including case counts)
-const phaseChartsConfig = [
+// Data Configuration with Stage SLA and Overall Median benchmark
+const stageTrendsConfig = [
   {
     id: 'sc0',
     stages: [
-      { name: 'Sketch Requested', sla: 5 },
-      { name: 'In Design', sla: 10 },
-      { name: 'Design Review', sla: 5 },
-      { name: 'Sketch Received', sla: 2 }
+      { name: 'Sketch Requested', sla: 5, avg: 4.2 },
+      { name: 'Sketch Received', sla: 10, avg: 8.5 },
+      { name: 'Sketch Approved', sla: 2, avg: 3.1 }
     ],
-    failed: [6.5, 14, 7.5, 4],
-    failedCounts: [12, 28, 15, 8],
-    warning: [4, 9, 3.5, 2],
-    warningCounts: [5, 12, 8, 4]
+    medianData: [8, 16, 6.5],
+    casesData: [120, 85, 45]
   },
   {
     id: 'sc1',
     stages: [
-      { name: 'Sketch Received', sla: 2 },
-      { name: 'Sent to Family', sla: 3 },
-      { name: 'Awaiting Family Approval', sla: 14 },
-      { name: 'Sketch Approved', sla: 2 }
+      { name: 'Sketch Received', sla: 2, avg: 1.8 },
+      { name: 'Sketch Approved', sla: 2, avg: 3.5 }
     ],
-    failed: [4, 5.5, 18, 4.5],
-    failedCounts: [9, 11, 35, 10],
-    warning: [1.5, 2.5, 13, 1.5],
-    warningCounts: [4, 6, 18, 5]
+    medianData: [5, 7],
+    casesData: [92, 40]
   },
   {
     id: 'sc2',
     stages: [
-      { name: 'Sketch Approved', sla: 2 },
-      { name: 'Vendor PO Created', sla: 3 },
-      { name: 'Vendor Confirmation', sla: 3 }
+      { name: 'Vendor Confirmation', sla: 2, avg: 2.4 },
+      { name: 'Memorial Received', sla: 3, avg: 4.8 },
+      { name: 'IWO Submitted', sla: 3, avg: 3.2 }
     ],
-    failed: [5, 7, 5],
-    failedCounts: [14, 22, 16],
-    warning: [2, 2.5, 2.5],
-    warningCounts: [7, 9, 8]
+    medianData: [3.5, 8, 5],
+    casesData: [45, 38, 30]
   },
   {
     id: 'sc3',
     stages: [
-      { name: 'Vendor Confirmation', sla: 3 },
-      { name: 'In Production', sla: 21 },
-      { name: 'Shipped', sla: 7 },
-      { name: 'Memorial Received', sla: 2 }
+      { name: 'Vendor Confirmation', sla: 3, avg: 4.1 },
+      { name: 'Memorial Received', sla: 21, avg: 24.5 },
+      { name: 'IWO Submitted', sla: 7, avg: 8.2 },
+      { name: 'IWO Completed', sla: 2, avg: 2.8 }
     ],
-    failed: [5.5, 28, 11, 4.5],
-    failedCounts: [15, 42, 20, 12],
-    warning: [2.5, 20, 6, 2],
-    warningCounts: [8, 19, 10, 6]
+    medianData: [6, 34, 12, 4],
+    casesData: [15, 42, 20, 12]
   }
 ];
 
-// Unified Grouped Tooltip configuration
+// Custom Plugin to draw multiple horizontal benchmark lines (SLA and Overall Avg)
+const benchmarkLinesPlugin = {
+  id: 'benchmarkLinesPlugin',
+  afterDatasetsDraw(chart) {
+    const { ctx, chartArea, scales } = chart;
+    const yAxis = scales.y;
+    
+    const stagesConfig = chart.config.data.stagesConfig;
+    if (!stagesConfig) return;
+
+    ctx.save();
+    
+    const meta = chart.getDatasetMeta(0);
+    
+    meta.data.forEach((bar, index) => {
+      const config = stagesConfig[index];
+      const xCenter = bar.x;
+      const width = bar.width;
+      const padding = 12;
+      const startX = xCenter - (width / 2) - padding;
+      const endX = xCenter + (width / 2) + padding;
+
+      // 1. Draw SLA Line (RED)
+      const ySla = yAxis.getPixelForValue(config.sla);
+      if (ySla >= chartArea.top && ySla <= chartArea.bottom) {
+        ctx.beginPath();
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = '#d13438'; // Severe Red
+        ctx.lineWidth = 2;
+        ctx.moveTo(startX, ySla);
+        ctx.lineTo(endX, ySla);
+        ctx.stroke();
+      }
+
+      // 2. Draw Overall Median Line (BLUE)
+      const yAvg = yAxis.getPixelForValue(config.avg);
+      if (yAvg >= chartArea.top && yAvg <= chartArea.bottom) {
+        ctx.beginPath();
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = '#0f6cbd'; // Fluent Blue
+        ctx.lineWidth = 2;
+        ctx.moveTo(startX, yAvg);
+        ctx.lineTo(endX, yAvg);
+        ctx.stroke();
+      }
+    });
+    
+    ctx.restore();
+  }
+};
+
+Chart.register(benchmarkLinesPlugin);
+
+// Tooltip configuration 
 const tooltipCfg = {
   backgroundColor: '#ffffff',
   borderColor: '#e1dfdd',
@@ -364,73 +418,30 @@ const tooltipCfg = {
     title: items => items[0].label,
     label: item => {
       if (item.raw === null || item.raw === undefined) return null;
+      const config = item.chart.config.data.stagesConfig[item.dataIndex];
+      const cases = item.dataset.cases[item.dataIndex];
       
-      if (item.dataset.label === 'SLA Limit') {
-        return `SLA Limit: ${item.raw}d`;
-      }
-
-      // Fetch the specific case count from the dataset
-      const count = item.dataset.counts ? item.dataset.counts[item.dataIndex] : 0;
-      return `${item.dataset.label}: ${item.raw}d (${count} cases)`;
+      return [
+        ` Total Cases: ${cases}`,
+        ` Current Median: ${item.raw}d`,
+        ` Overall Median: ${config.avg}d`,
+        ` SLA Limit: ${config.sla}d`
+      ];
     }
   }
 };
 
-// Custom plugin to draw the background gray zone (SLA limit indicator)
-const horizontalSlaPlugin = {
-  id: 'horizontalSlaPlugin',
-  beforeDatasetsDraw(chart) {
-    const { ctx, chartArea, scales } = chart;
-    const xAxis = scales.x;
-    const yAxis = scales.y;
-    const stagesConfig = chart.config.data.stagesConfig;
-
-    ctx.save();
-    ctx.fillStyle = '#e1dfdd'; // Light gray for SLA zone
-
-    stagesConfig.forEach((stage, index) => {
-      const yCenter = yAxis.getPixelForTick(index);
-      const tickHeight = (chartArea.bottom - chartArea.top) / stagesConfig.length;
-      
-      // Gray zone height slightly larger than the category bars
-      const height = tickHeight * 0.85; 
-      const top = yCenter - (height / 2);
-      
-      const startX = xAxis.getPixelForValue(0);
-      const endX = xAxis.getPixelForValue(stage.sla);
-      let width = endX - startX;
-      if (width < 0) width = 0;
-
-      // Draw rounded rectangle for SLA zone
-      ctx.beginPath();
-      const radius = 4;
-      ctx.moveTo(startX, top);
-      ctx.lineTo(startX + width - radius, top);
-      ctx.quadraticCurveTo(startX + width, top, startX + width, top + radius);
-      ctx.lineTo(startX + width, top + height - radius);
-      ctx.quadraticCurveTo(startX + width, top + height, startX + width - radius, top + height);
-      ctx.lineTo(startX, top + height);
-      ctx.closePath();
-      ctx.fill();
-    });
-    ctx.restore();
-  }
-};
-
-Chart.register(horizontalSlaPlugin);
-
 document.addEventListener('DOMContentLoaded', function() {
-  // Lighter bar colors
-  const colorRed = '#e57373';
-  const colorYellow = '#ffb74d';
+  const colorLightRedTransparent = 'rgba(229, 115, 115, 0.5)';
 
-  phaseChartsConfig.forEach((config) => {
+  stageTrendsConfig.forEach((config) => {
     const ctx = document.getElementById(config.id);
     if (!ctx) return;
 
     const labels = config.stages.map(s => s.name);
-    const slaData = config.stages.map(s => s.sla);
-    const maxDaysInPhase = Math.max(...config.failed, ...slaData);
+    const benchmarkValues = config.stages.flatMap(s => [s.sla, s.avg]);
+    
+    const maxDays = Math.max(...config.medianData, ...benchmarkValues);
 
     new Chart(ctx, {
       type: 'bar',
@@ -439,44 +450,36 @@ document.addEventListener('DOMContentLoaded', function() {
         stagesConfig: config.stages,
         datasets: [
           {
-            label: 'Failed',
-            data: config.failed,
-            counts: config.failedCounts, // Bind cases counts to dataset
-            backgroundColor: colorRed,
-            borderRadius: { topRight: 4, bottomRight: 4, topLeft: 0, bottomLeft: 0 },
-            categoryPercentage: 0.7, 
-            barPercentage: 0.9
-          },
-          {
-            label: 'Warning',
-            data: config.warning,
-            counts: config.warningCounts, // Bind cases counts to dataset
-            backgroundColor: colorYellow,
-            borderRadius: { topRight: 4, bottomRight: 4, topLeft: 0, bottomLeft: 0 },
-            categoryPercentage: 0.7,
-            barPercentage: 0.9
-          },
-          // Hidden transparent dataset specifically to feed the SLA limit into the group tooltip
-          {
-            label: 'SLA Limit',
-            data: slaData,
-            backgroundColor: '#e1dfdd',
-            barThickness: 0, 
-            hoverBackgroundColor: '#e1dfdd'
+            label: 'Median Days',
+            data: config.medianData,
+            cases: config.casesData,
+            backgroundColor: colorLightRedTransparent,
+            borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
+            barPercentage: 0.6 
           }
         ]
       },
       options: {
         responsive: true,
-        indexAxis: 'y', 
+        maintainAspectRatio: false,
         interaction: {
           mode: 'index',
-          intersect: false, // Allows tooltip to appear anywhere along the row
+          intersect: false, 
         },
         scales: {
           x: {
+            grid: { display: false },
+            border: { color: '#e1dfdd' },
+            ticks: {
+              color: '#616161',
+              font: { family: 'Segoe UI', size: 11, weight: '500' },
+              maxRotation: 15,
+              autoSkip: false
+            }
+          },
+          y: {
             min: 0,
-            max: Math.ceil(maxDaysInPhase / 5) * 5 + 10,
+            max: Math.ceil(maxDays / 5) * 5 + 2,
             ticks: {
               color: '#616161',
               font: { family: 'Segoe UI', size: 10 },
@@ -484,17 +487,8 @@ document.addEventListener('DOMContentLoaded', function() {
               stepSize: 5,
             },
             grid: { color: 'rgba(0,0,0,0.04)' },
-            border: { color: '#e1dfdd' },
-            title: { display: true, text: 'Median Days', color: '#616161', font: { size: 11, family: 'Segoe UI', weight: '600' } },
-          },
-          y: {
-            ticks: {
-              color: '#616161',
-              font: { family: 'Segoe UI', size: 10 },
-              autoSkip: false,
-            },
-            grid: { display: false },
-            border: { color: '#e1dfdd' },
+            border: { display: false },
+            title: { display: true, text: 'Days', color: '#616161', font: { size: 10, family: 'Segoe UI' } },
           }
         },
         plugins: {
