@@ -174,12 +174,18 @@
   }
 
   /* Legend */
-  .legend-item { display: flex; align-items: center; gap: 6px; }
-  .legend-line { width: 20px; height: 3px; border-radius: 2px; }
-  .legend-box { width: 14px; height: 14px; border-radius: 2px; }
-  .legend-line.dashed-red { border-top: 2px dashed var(--severe-red); height: 0; background: transparent; width: 20px; }
-  .legend-line.dashed-blue { border-top: 2px dashed var(--accent); height: 0; background: transparent; width: 20px; }
-  .legend-lbl { font-size: 12px; color: var(--text); }
+  .legend-item { display: flex; align-items: center; gap: 8px; }
+  .legend-box { width: 14px; height: 14px; border-radius: 3px; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .legend-lbl { font-size: 13px; color: var(--text); font-weight: 500; }
+
+  /* Data Table */
+  .table-container { max-height: 350px; overflow-y: auto; border-bottom: 1px solid var(--border); }
+  .data-table { width: 100%; border-collapse: collapse; text-align: left; }
+  .data-table th { position: sticky; top: 0; z-index: 10; padding: 12px 20px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--muted); font-weight: 600; background: var(--surface2); }
+  .data-table td { padding: 12px 20px; border-bottom: 1px solid var(--border); font-size: 13px; color: var(--text); }
+  .data-table tr:hover { background: #fdfdfd; }
+  .status-breach { color: var(--severe-red); font-weight: 600; background: rgba(209, 52, 56, 0.1); padding: 2px 6px; border-radius: 4px; }
 
   /* Footer */
   footer {
@@ -196,34 +202,25 @@
 </head>
 <body>
 
-<!-- HEADER -->
-<div class="header">
-  <div class="header-left">
-    <div class="logo">NorthStar Memorial Group</div>
-    <div class="report-title">/ SLA Performance Report</div>
-    <div class="badge">WEEKLY</div>
-  </div>
-  <div class="header-right">
-    <span class="last-refresh">Last refresh: March 10, 2026 · 06:00 AM</span>
-    <button class="export-btn" onclick="alert('Export triggered')">Export Data</button>
-  </div>
-</div>
+
 
 <!-- FILTERS -->
 <div class="filters-bar">
   <div class="filter-group">
     <span class="filter-label">Region</span>
-    <select class="filter-select">
-      <option value="all">All Regions</option>
-      <option value="red_river" selected>Red River Region</option>
-      <option value="west">West Region (CA/WA)</option>
-      <option value="south">South Region</option>
+    <select class="filter-select" id="regionFilter">
+      <option value="all" selected>All Regions</option>
+      <option value="florida">Florida</option>
+      <option value="memorial_plan">Memorial Plan</option>
+      <option value="northern_pacific">Northern Pacific</option>
+      <option value="red_river">Red River</option>
+      <option value="west">West</option>
     </select>
   </div>
   <div class="filter-sep"></div>
   <div class="filter-group">
     <span class="filter-label">Material</span>
-    <select class="filter-select">
+    <select class="filter-select" id="materialFilter">
       <option value="all">All Materials</option>
       <option value="granite">Granite</option>
       <option value="bronze">Bronze</option>
@@ -240,6 +237,20 @@
       <option value="iwo_completed">Installation Work Order Completed</option>
     </select>
   </div>
+  <div class="filter-sep"></div>
+  <div class="filter-group">
+    <span class="filter-label">Stage</span>
+    <select class="filter-select" id="stageFilter">
+      <option value="all" selected>All Stages</option>
+      <option value="Sketch Requested">Sketch Requested</option>
+      <option value="Sketch Received">Sketch Received</option>
+      <option value="Sketch Approved">Sketch Approved</option>
+      <option value="Vendor Confirmation">Vendor Confirmation</option>
+      <option value="Memorial Received">Memorial Received</option>
+      <option value="IWO Submitted">IWO Submitted</option>
+      <option value="IWO Completed">IWO Completed</option>
+    </select>
+  </div>
 </div>
 
 <!-- MAIN CONTENT -->
@@ -249,18 +260,56 @@
   <div class="panel">
     <div class="panel-header">
       <div>
-        <div class="panel-title" id="panelTitle">Consolidated Median Days & SLA</div>
-  
-      </div>
-      <div style="display:flex; gap:16px; align-items:center;">
-        <div class="legend-item"><div class="legend-line dashed-red"></div><span class="legend-lbl">SLA Limit</span></div>
-        <div class="filter-sep" style="height: 16px;"></div>
-        <div class="legend-item"><div class="legend-line dashed-blue"></div><span class="legend-lbl">Overall Median</span></div>
+        <div class="panel-title" id="panelTitle">SLA Target vs Average Time</div>
       </div>
     </div>
     <div class="panel-body">
+      
+      <!-- Custom Legend matching the new visual style -->
+      <div style="display:flex; gap:32px; align-items:center; justify-content: center; margin-bottom: 24px;">
+        <div class="legend-item">
+          <div class="legend-box" style="background:#e1dfdd;"></div>
+          <span class="legend-lbl">SLA Target</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot" style="background:#0f6cbd;"></div>
+          <span class="legend-lbl">Average Time</span>
+        </div>
+      </div>
+
       <div class="chart-full-width">
         <div class="chart-container"><canvas id="mainChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLA BREACH EXPORT TABLE PANEL -->
+  <div class="panel">
+    <div class="panel-header">
+      <div>
+        <div class="panel-title">SLA Breach Details</div>
+      </div>
+      <div>
+        <button class="export-btn" onclick="exportToCSV()">Export to Excel</button>
+      </div>
+    </div>
+    <div class="panel-body" style="padding: 0;">
+      <div class="table-container">
+        <table class="data-table" id="breachTable">
+          <thead>
+            <tr>
+              <th>Case Title</th>
+              <th>Case Number</th>
+              <th>Marker Type</th>
+              <th>Location</th>
+              <th>Customer</th>
+              <th>Days in Stage</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <!-- Rows will be populated by JS based on filters -->
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -315,74 +364,35 @@ const stageTrendsConfig = {
   }
 };
 
-// Benchmark plugin
-const benchmarkLinesPlugin = {
-  id: 'benchmarkLinesPlugin',
-  afterDatasetsDraw(chart) {
-    const { ctx, chartArea, scales } = chart;
-    const yAxis = scales.y;
-    const stagesConfig = chart.config.data.stagesConfig;
-    if (!stagesConfig) return;
-
-    ctx.save();
-    const meta = chart.getDatasetMeta(0);
-    
-    meta.data.forEach((bar, index) => {
-      const config = stagesConfig[index];
-      if (!config) return;
-      
-      const xCenter = bar.x;
-      const width = bar.width;
-      const padding = 12;
-      const startX = xCenter - (width / 2) - padding;
-      const endX = xCenter + (width / 2) + padding;
-
-      // 1. SLA Line (Red Dashed)
-      const ySla = yAxis.getPixelForValue(config.sla);
-      if (ySla >= chartArea.top && ySla <= chartArea.bottom) {
-        ctx.beginPath();
-        ctx.setLineDash([4, 4]);
-        ctx.strokeStyle = '#d13438';
-        ctx.lineWidth = 2;
-        ctx.moveTo(startX, ySla);
-        ctx.lineTo(endX, ySla);
-        ctx.stroke();
-      }
-
-      // 2. Overall Median Line (Blue Dashed)
-      const yAvg = yAxis.getPixelForValue(config.avg);
-      if (yAvg >= chartArea.top && yAvg <= chartArea.bottom) {
-        ctx.beginPath();
-        ctx.setLineDash([4, 4]);
-        ctx.strokeStyle = '#0f6cbd';
-        ctx.lineWidth = 2;
-        ctx.moveTo(startX, yAvg);
-        ctx.lineTo(endX, yAvg);
-        ctx.stroke();
-      }
-    });
-    ctx.restore();
-  }
-};
-
-Chart.register(benchmarkLinesPlugin);
+// Mock Data for the Table
+const mockTableData = [
+  { caseTitle: 'Smith Memorial', region: 'west', contract: 'CON-98231', family: 'Smith', mat: 'Granite', vendor: 'Coldspring', stage: 'Sketch Received', days: 16, sla: 10, milestone: 'sketch_received', loc: 'Skylawn Memorial Park' },
+  { caseTitle: 'Johnson Bronze', region: 'red_river', contract: 'CON-98245', family: 'Johnson', mat: 'Bronze', vendor: 'Matthews', stage: 'Memorial Received', days: 34, sla: 21, milestone: 'memorial_received', loc: 'Restland Funeral Home' },
+  { caseTitle: 'Williams Upright', region: 'northern_pacific', contract: 'CON-98288', family: 'Williams', mat: 'Granite', vendor: 'Eagle Granite', stage: 'Sketch Requested', days: 14, sla: 5, milestone: 'sketch_received', loc: 'Valley of the Temples' },
+  { caseTitle: 'Davis Flat Marker', region: 'florida', contract: 'CON-98302', family: 'Davis', mat: 'Bronze', vendor: 'Matthews', stage: 'IWO Completed', days: 7, sla: 2, milestone: 'iwo_completed', loc: 'Sunset Funeral Home' },
+  { caseTitle: 'Miller Estate', region: 'memorial_plan', contract: 'CON-98315', family: 'Miller', mat: 'Granite', vendor: 'Coldspring', stage: 'Sketch Approved', days: 6, sla: 2, milestone: 'sketch_approved', loc: 'Chapel of the Chimes' },
+  { caseTitle: 'Taylor Companion', region: 'west', contract: 'CON-98400', family: 'Taylor', mat: 'Bronze', vendor: 'Matthews', stage: 'Vendor Confirmation', days: 6, sla: 3, milestone: 'memorial_received', loc: 'Chapel of the Light' },
+  { caseTitle: 'Brown Custom', region: 'red_river', contract: 'CON-98410', family: 'Brown', mat: 'Granite', vendor: 'Star Granite', stage: 'IWO Submitted', days: 12, sla: 7, milestone: 'iwo_completed', loc: 'Restland Funeral Home' },
+  { caseTitle: 'Wilson Ledger', region: 'northern_pacific', contract: 'CON-98450', family: 'Wilson', mat: 'Bronze', vendor: 'Matthews', stage: 'Sketch Received', days: 15, sla: 10, milestone: 'sketch_received', loc: 'Maui Memorial Park' },
+  { caseTitle: 'Moore Slant', region: 'west', contract: 'CON-98501', family: 'Moore', mat: 'Granite', vendor: 'Coldspring', stage: 'Memorial Received', days: 28, sla: 21, milestone: 'memorial_received', loc: 'Skylawn Memorial Park' },
+  { caseTitle: 'Anderson Plaque', region: 'florida', contract: 'CON-98555', family: 'Anderson', mat: 'Bronze', vendor: 'Matthews', stage: 'Vendor Confirmation', days: 5, sla: 2, milestone: 'memorial_received', loc: 'Sunset Funeral Home' },
+  { caseTitle: 'Thomas Bench', region: 'red_river', contract: 'CON-98602', family: 'Thomas', mat: 'Granite', vendor: 'Eagle Granite', stage: 'Sketch Requested', days: 9, sla: 5, milestone: 'sketch_received', loc: 'Restland Funeral Home' },
+  { caseTitle: 'Jackson Bronze', region: 'memorial_plan', contract: 'CON-98610', family: 'Jackson', mat: 'Bronze', vendor: 'Matthews', stage: 'IWO Submitted', days: 9, sla: 3, milestone: 'memorial_received', loc: 'Chapel of the Chimes' }
+];
 
 let mainChart = null;
 
-function renderChart(filterValue) {
+function renderChart(milestoneVal, stageVal) {
   let combinedStages = [];
-  let combinedMedian = [];
+  let combinedMedian = []; // We keep the variable name but it reflects Average Data in UI
   let combinedCases = [];
-  let currentTitle = "Consolidated Median Days & SLA";
+  let currentTitle = "Consolidated SLA Target vs Average Time";
 
-  if (filterValue === 'all') {
+  if (milestoneVal === 'all') {
     const seenStages = new Set();
-    
-    // Iterate through all milestones to collect unique stages
     Object.keys(stageTrendsConfig).forEach(key => {
       const config = stageTrendsConfig[key];
       config.stages.forEach((stage, idx) => {
-        // Remove duplicates by stage name to maintain a clean linear flow
         if (!seenStages.has(stage.name)) {
           seenStages.add(stage.name);
           combinedStages.push(stage);
@@ -391,94 +401,108 @@ function renderChart(filterValue) {
         }
       });
     });
-  } else if (stageTrendsConfig[filterValue]) {
-    const config = stageTrendsConfig[filterValue];
+  } else if (stageTrendsConfig[milestoneVal]) {
+    const config = stageTrendsConfig[milestoneVal];
     combinedStages = config.stages;
     combinedMedian = config.medianData;
     combinedCases = config.casesData;
     currentTitle = config.title;
   }
 
+  // Filter Chart by Stage if selected
+  if (stageVal !== 'all') {
+    const filteredStages = [];
+    const filteredMedian = [];
+    const filteredCases = [];
+    combinedStages.forEach((stage, idx) => {
+      if (stage.name === stageVal) {
+        filteredStages.push(stage);
+        filteredMedian.push(combinedMedian[idx]);
+        filteredCases.push(combinedCases[idx]);
+      }
+    });
+    combinedStages = filteredStages;
+    combinedMedian = filteredMedian;
+    combinedCases = filteredCases;
+    currentTitle += ` (Filtered: ${stageVal})`;
+  }
+
   document.getElementById('panelTitle').innerText = currentTitle;
 
   const labels = combinedStages.map(s => s.name);
-  const benchmarkValues = combinedStages.flatMap(s => [s.sla, s.avg]);
-  const maxDays = Math.max(...combinedMedian, ...benchmarkValues);
+  const combinedSla = combinedStages.map(s => s.sla);
+  const maxDays = combinedMedian.length ? Math.max(...combinedMedian, ...combinedSla) : 0;
 
   const ctx = document.getElementById('mainChart').getContext('2d');
+  if (mainChart) mainChart.destroy();
 
-  if (mainChart) {
-    mainChart.destroy();
-  }
+  if (combinedStages.length === 0) return; // Hide chart if no data matches
 
   mainChart = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: labels,
-      stagesConfig: combinedStages,
-      datasets: [{
-        label: 'Median Days',
-        data: combinedMedian,
-        cases: combinedCases,
-        backgroundColor: 'rgba(179, 181, 182, 0.5)',
-        borderRadius: { topLeft: 4, topRight: 4, bottomLeft: 0, bottomRight: 0 },
-        barPercentage: 0.6
-      }]
+      datasets: [
+        {
+          type: 'bar',
+          label: 'SLA Target',
+          data: combinedSla,
+          backgroundColor: '#e1dfdd',
+          borderRadius: 4,
+          barPercentage: 0.35,
+          order: 2
+        },
+        {
+          type: 'line',
+          label: 'Average Time',
+          data: combinedMedian,
+          cases: combinedCases,
+          backgroundColor: '#0f6cbd',
+          borderColor: '#ffffff',
+          borderWidth: 2,
+          pointRadius: 7,
+          pointHoverRadius: 9,
+          showLine: false,
+          order: 1
+        }
+      ]
     },
     options: {
+      indexAxis: 'y',
       responsive: true,
       maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       scales: {
         x: {
-          grid: { display: false },
-          border: { color: '#e1dfdd' },
-          ticks: {
-            color: '#616161',
-            font: { family: 'Segoe UI', size: 11, weight: '500' },
-            maxRotation: 45,
-            minRotation: 0,
-            autoSkip: false
-          }
+          min: 0,
+          max: Math.ceil(maxDays / 5) * 5 + 5,
+          grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false },
+          border: { display: false },
+          ticks: { color: '#616161', font: { family: 'Segoe UI', size: 11 }, callback: v => v + 'd', stepSize: 5 },
+          title: { display: true, text: 'Days', color: '#616161', font: { size: 10, family: 'Segoe UI' } }
         },
         y: {
-          min: 0,
-          max: Math.ceil(maxDays / 5) * 5 + 2,
-          ticks: {
-            color: '#616161',
-            font: { family: 'Segoe UI', size: 10 },
-            callback: v => v + 'd',
-            stepSize: 5,
-          },
-          grid: { color: 'rgba(0,0,0,0.04)' },
+          grid: { display: false, drawBorder: false },
           border: { display: false },
-          title: { display: true, text: 'Days', color: '#616161', font: { size: 10, family: 'Segoe UI' } },
+          ticks: { color: '#242424', font: { family: 'Segoe UI', size: 12, weight: '500' } }
         }
       },
       plugins: {
         legend: { display: false },
         tooltip: {
-          backgroundColor: '#ffffff',
-          borderColor: '#e1dfdd',
-          borderWidth: 1,
-          titleColor: '#242424',
-          bodyColor: '#616161',
+          backgroundColor: 'rgba(36, 36, 36, 0.95)',
+          titleColor: '#ffffff',
+          bodyColor: '#f3f2f1',
+          footerColor: '#c8c6c4',
           padding: 12,
-          titleFont: { family: 'Segoe UI', size: 13, weight: '600' },
-          bodyFont: { family: 'Segoe UI', size: 12 },
-          boxPadding: 4,
+          boxPadding: 8,
+          usePointStyle: true,
           callbacks: {
             title: items => items[0].label,
-            label: item => {
-              if (item.raw === null || item.raw === undefined) return null;
-              const config = item.chart.config.data.stagesConfig[item.dataIndex];
-              const cases = item.dataset.cases[item.dataIndex];
-              return [
-                ` Total Cases: ${cases}`,
-                ` Current Median: ${item.raw}d`,
-                ` Overall Median: ${config.avg}d`,
-                ` SLA Limit: ${config.sla}d`
-              ];
+            label: item => ` ${item.dataset.label}: ${item.raw}d`,
+            footer: items => {
+              const cases = items[0].chart.config.data.datasets[1].cases[items[0].dataIndex];
+              return `\nTotal Cases: ${cases}`;
             }
           }
         }
@@ -488,16 +512,87 @@ function renderChart(filterValue) {
   });
 }
 
-document.addEventListener('DOMContentLoaded', function() {
-  const milestoneFilter = document.getElementById('milestoneFilter');
+function renderTable(data) {
+  const tbody = document.getElementById('tableBody');
+  tbody.innerHTML = '';
   
-  // Initial render with All Milestones
-  renderChart(milestoneFilter.value);
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 24px; color:#616161;">No breached cases found for the selected filters.</td></tr>';
+    return;
+  }
 
-  // Filter change listener
-  milestoneFilter.addEventListener('change', (e) => {
-    renderChart(e.target.value);
+  data.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.caseTitle}</td>
+      <td>${row.contract}</td>
+      <td>${row.mat}</td>
+      <td>${row.loc}</td>
+      <td>${row.family}</td>
+      <td><span class="status-breach">${row.days} days</span></td>
+    `;
+    tbody.appendChild(tr);
   });
+}
+
+function exportToCSV() {
+  const table = document.getElementById('breachTable');
+  let csv = [];
+  
+  // Parse Table Rows
+  for (let i = 0; i < table.rows.length; i++) {
+    let row = [], cols = table.rows[i].querySelectorAll('td, th');
+    for (let j = 0; j < cols.length; j++) {
+      let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, '').trim();
+      data = data.replace(/"/g, '""'); // Escape double quotes
+      row.push('"' + data + '"');
+    }
+    csv.push(row.join(','));
+  }
+  
+  // Create and Download CSV File
+  const csvFile = new Blob([csv.join('\n')], {type: 'text/csv;charset=utf-8;'});
+  const downloadLink = document.createElement('a');
+  downloadLink.download = 'SLA_Breach_Report.csv';
+  downloadLink.href = window.URL.createObjectURL(csvFile);
+  downloadLink.style.display = 'none';
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
+}
+
+function applyFilters() {
+  const regionVal = document.getElementById('regionFilter').value;
+  const materialVal = document.getElementById('materialFilter').value;
+  const milestoneVal = document.getElementById('milestoneFilter').value;
+  const stageVal = document.getElementById('stageFilter').value;
+
+  // 1. Render Chart Based on Milestone & Stage
+  renderChart(milestoneVal, stageVal);
+
+  // 2. Filter & Render Table Data
+  const filteredData = mockTableData.filter(d => {
+    const matchRegion = (regionVal === 'all') || (d.region === regionVal);
+    // Делаем проверку материала нечувствительной к регистру (Granite == granite)
+    const matchMaterial = (materialVal === 'all') || (d.mat.toLowerCase() === materialVal.toLowerCase());
+    const matchMilestone = (milestoneVal === 'all') || (d.milestone === milestoneVal);
+    const matchStage = (stageVal === 'all') || (d.stage === stageVal);
+    
+    return matchRegion && matchMaterial && matchMilestone && matchStage;
+  });
+
+  renderTable(filteredData);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Initial Load
+  applyFilters();
+
+  // Attach Listeners to all filters
+  document.getElementById('regionFilter').addEventListener('change', applyFilters);
+  document.getElementById('materialFilter').addEventListener('change', applyFilters);
+  document.getElementById('milestoneFilter').addEventListener('change', applyFilters);
+  document.getElementById('stageFilter').addEventListener('change', applyFilters);
 });
 </script>
 </body>
