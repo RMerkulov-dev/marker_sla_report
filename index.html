@@ -47,39 +47,6 @@
     min-height: 100vh;
   }
 
-  /* Header */
-  .header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 12px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .header-left { display: flex; align-items: center; gap: 16px; }
-  .logo {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--text);
-  }
-  .report-title {
-    font-size: 14px;
-    color: var(--muted);
-  }
-  .header-right { display: flex; align-items: center; gap: 12px; }
-  .badge {
-    background: #f0f6fc;
-    color: var(--accent);
-    padding: 4px 12px;
-    border-radius: var(--radius-control);
-    font-size: 12px;
-    font-weight: 600;
-  }
-  .last-refresh {
-    font-size: 12px;
-    color: var(--muted);
-  }
-  
   /* Fluent Buttons */
   .export-btn {
     background: var(--accent);
@@ -135,6 +102,26 @@
     outline: 1px solid var(--accent);
     outline-offset: -1px;
   }
+  
+  /* Calendar Date Pickers */
+  .filter-date {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 10px;
+    border-radius: var(--radius-control);
+    font-size: 14px;
+    font-family: var(--font);
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+  .filter-date:hover { border-color: var(--border-hover); }
+  .filter-date:focus { 
+    border-color: var(--accent); 
+    outline: 1px solid var(--accent);
+    outline-offset: -1px;
+  }
+
   .filter-sep { width: 1px; height: 24px; background: var(--border); }
 
   /* Main Layout */
@@ -206,6 +193,13 @@
 
 <!-- FILTERS -->
 <div class="filters-bar">
+  <div class="filter-group">
+    <span class="filter-label">Date Range</span>
+    <input type="date" class="filter-date" id="dateFromFilter" title="Start Date">
+    <span style="color: var(--muted);">-</span>
+    <input type="date" class="filter-date" id="dateToFilter" title="End Date">
+  </div>
+  <div class="filter-sep"></div>
   <div class="filter-group">
     <span class="filter-label">Region</span>
     <select class="filter-select" id="regionFilter">
@@ -366,18 +360,18 @@ const stageTrendsConfig = {
 
 // Mock Data for the Table
 const mockTableData = [
-  { caseTitle: 'Smith Memorial', region: 'west', contract: 'CON-98231', family: 'Smith', mat: 'Granite', vendor: 'Coldspring', stage: 'Sketch Received', days: 16, sla: 10, milestone: 'sketch_received', loc: 'Skylawn Memorial Park' },
-  { caseTitle: 'Johnson Bronze', region: 'red_river', contract: 'CON-98245', family: 'Johnson', mat: 'Bronze', vendor: 'Matthews', stage: 'Memorial Received', days: 34, sla: 21, milestone: 'memorial_received', loc: 'Restland Funeral Home' },
-  { caseTitle: 'Williams Upright', region: 'northern_pacific', contract: 'CON-98288', family: 'Williams', mat: 'Granite', vendor: 'Eagle Granite', stage: 'Sketch Requested', days: 14, sla: 5, milestone: 'sketch_received', loc: 'Valley of the Temples' },
-  { caseTitle: 'Davis Flat Marker', region: 'florida', contract: 'CON-98302', family: 'Davis', mat: 'Bronze', vendor: 'Matthews', stage: 'IWO Completed', days: 7, sla: 2, milestone: 'iwo_completed', loc: 'Sunset Funeral Home' },
-  { caseTitle: 'Miller Estate', region: 'memorial_plan', contract: 'CON-98315', family: 'Miller', mat: 'Granite', vendor: 'Coldspring', stage: 'Sketch Approved', days: 6, sla: 2, milestone: 'sketch_approved', loc: 'Chapel of the Chimes' },
-  { caseTitle: 'Taylor Companion', region: 'west', contract: 'CON-98400', family: 'Taylor', mat: 'Bronze', vendor: 'Matthews', stage: 'Vendor Confirmation', days: 6, sla: 3, milestone: 'memorial_received', loc: 'Chapel of the Light' },
-  { caseTitle: 'Brown Custom', region: 'red_river', contract: 'CON-98410', family: 'Brown', mat: 'Granite', vendor: 'Star Granite', stage: 'IWO Submitted', days: 12, sla: 7, milestone: 'iwo_completed', loc: 'Restland Funeral Home' },
-  { caseTitle: 'Wilson Ledger', region: 'northern_pacific', contract: 'CON-98450', family: 'Wilson', mat: 'Bronze', vendor: 'Matthews', stage: 'Sketch Received', days: 15, sla: 10, milestone: 'sketch_received', loc: 'Maui Memorial Park' },
-  { caseTitle: 'Moore Slant', region: 'west', contract: 'CON-98501', family: 'Moore', mat: 'Granite', vendor: 'Coldspring', stage: 'Memorial Received', days: 28, sla: 21, milestone: 'memorial_received', loc: 'Skylawn Memorial Park' },
-  { caseTitle: 'Anderson Plaque', region: 'florida', contract: 'CON-98555', family: 'Anderson', mat: 'Bronze', vendor: 'Matthews', stage: 'Vendor Confirmation', days: 5, sla: 2, milestone: 'memorial_received', loc: 'Sunset Funeral Home' },
-  { caseTitle: 'Thomas Bench', region: 'red_river', contract: 'CON-98602', family: 'Thomas', mat: 'Granite', vendor: 'Eagle Granite', stage: 'Sketch Requested', days: 9, sla: 5, milestone: 'sketch_received', loc: 'Restland Funeral Home' },
-  { caseTitle: 'Jackson Bronze', region: 'memorial_plan', contract: 'CON-98610', family: 'Jackson', mat: 'Bronze', vendor: 'Matthews', stage: 'IWO Submitted', days: 9, sla: 3, milestone: 'memorial_received', loc: 'Chapel of the Chimes' }
+  { date: '2026-03-20', caseTitle: 'Smith Memorial', region: 'west', contract: 'CON-98231', family: 'Smith', mat: 'Granite', vendor: 'Coldspring', stage: 'Sketch Received', days: 16, sla: 10, milestone: 'sketch_received', loc: 'Skylawn Memorial Park' },
+  { date: '2026-02-15', caseTitle: 'Johnson Bronze', region: 'red_river', contract: 'CON-98245', family: 'Johnson', mat: 'Bronze', vendor: 'Matthews', stage: 'Memorial Received', days: 34, sla: 21, milestone: 'memorial_received', loc: 'Restland Funeral Home' },
+  { date: '2026-03-05', caseTitle: 'Williams Upright', region: 'northern_pacific', contract: 'CON-98288', family: 'Williams', mat: 'Granite', vendor: 'Eagle Granite', stage: 'Sketch Requested', days: 14, sla: 5, milestone: 'sketch_received', loc: 'Valley of the Temples' },
+  { date: '2026-03-22', caseTitle: 'Davis Flat Marker', region: 'florida', contract: 'CON-98302', family: 'Davis', mat: 'Bronze', vendor: 'Matthews', stage: 'IWO Completed', days: 7, sla: 2, milestone: 'iwo_completed', loc: 'Sunset Funeral Home' },
+  { date: '2026-01-10', caseTitle: 'Miller Estate', region: 'memorial_plan', contract: 'CON-98315', family: 'Miller', mat: 'Granite', vendor: 'Coldspring', stage: 'Sketch Approved', days: 6, sla: 2, milestone: 'sketch_approved', loc: 'Chapel of the Chimes' },
+  { date: '2026-03-18', caseTitle: 'Taylor Companion', region: 'west', contract: 'CON-98400', family: 'Taylor', mat: 'Bronze', vendor: 'Matthews', stage: 'Vendor Confirmation', days: 6, sla: 3, milestone: 'memorial_received', loc: 'Chapel of the Light' },
+  { date: '2025-12-05', caseTitle: 'Brown Custom', region: 'red_river', contract: 'CON-98410', family: 'Brown', mat: 'Granite', vendor: 'Star Granite', stage: 'IWO Submitted', days: 12, sla: 7, milestone: 'iwo_completed', loc: 'Restland Funeral Home' },
+  { date: '2026-02-28', caseTitle: 'Wilson Ledger', region: 'northern_pacific', contract: 'CON-98450', family: 'Wilson', mat: 'Bronze', vendor: 'Matthews', stage: 'Sketch Received', days: 15, sla: 10, milestone: 'sketch_received', loc: 'Maui Memorial Park' },
+  { date: '2026-01-20', caseTitle: 'Moore Slant', region: 'west', contract: 'CON-98501', family: 'Moore', mat: 'Granite', vendor: 'Coldspring', stage: 'Memorial Received', days: 28, sla: 21, milestone: 'memorial_received', loc: 'Skylawn Memorial Park' },
+  { date: '2026-03-10', caseTitle: 'Anderson Plaque', region: 'florida', contract: 'CON-98555', family: 'Anderson', mat: 'Bronze', vendor: 'Matthews', stage: 'Vendor Confirmation', days: 5, sla: 2, milestone: 'memorial_received', loc: 'Sunset Funeral Home' },
+  { date: '2026-02-05', caseTitle: 'Thomas Bench', region: 'red_river', contract: 'CON-98602', family: 'Thomas', mat: 'Granite', vendor: 'Eagle Granite', stage: 'Sketch Requested', days: 9, sla: 5, milestone: 'sketch_received', loc: 'Restland Funeral Home' },
+  { date: '2026-03-01', caseTitle: 'Jackson Bronze', region: 'memorial_plan', contract: 'CON-98610', family: 'Jackson', mat: 'Bronze', vendor: 'Matthews', stage: 'IWO Submitted', days: 9, sla: 3, milestone: 'memorial_received', loc: 'Chapel of the Chimes' }
 ];
 
 let mainChart = null;
@@ -562,6 +556,8 @@ function exportToCSV() {
 }
 
 function applyFilters() {
+  const dateFromVal = document.getElementById('dateFromFilter').value;
+  const dateToVal = document.getElementById('dateToFilter').value;
   const regionVal = document.getElementById('regionFilter').value;
   const materialVal = document.getElementById('materialFilter').value;
   const milestoneVal = document.getElementById('milestoneFilter').value;
@@ -570,25 +566,46 @@ function applyFilters() {
   // 1. Render Chart Based on Milestone & Stage
   renderChart(milestoneVal, stageVal);
 
+  // Конвертируем строки дат в объекты Date для сравнения, если они выбраны
+  const dateFrom = dateFromVal ? new Date(dateFromVal) : null;
+  const dateTo = dateToVal ? new Date(dateToVal) : null;
+
   // 2. Filter & Render Table Data
   const filteredData = mockTableData.filter(d => {
+    // Логика фильтрации по диапазону дат (с помощью календаря)
+    const itemDate = new Date(d.date);
+    let matchTimeframe = true;
+
+    if (dateFrom && itemDate < dateFrom) matchTimeframe = false;
+    if (dateTo && itemDate > dateTo) matchTimeframe = false;
+
     const matchRegion = (regionVal === 'all') || (d.region === regionVal);
-    // Делаем проверку материала нечувствительной к регистру (Granite == granite)
+    // Делаем проверку материала нечувствительной к регистру
     const matchMaterial = (materialVal === 'all') || (d.mat.toLowerCase() === materialVal.toLowerCase());
     const matchMilestone = (milestoneVal === 'all') || (d.milestone === milestoneVal);
     const matchStage = (stageVal === 'all') || (d.stage === stageVal);
     
-    return matchRegion && matchMaterial && matchMilestone && matchStage;
+    return matchTimeframe && matchRegion && matchMaterial && matchMilestone && matchStage;
   });
 
   renderTable(filteredData);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+  // Установим дефолтные значения дат (например, за последний месяц) для красивого демо
+  const today = new Date('2026-03-23');
+  const thirtyDaysAgo = new Date(today);
+  thirtyDaysAgo.setDate(today.getDate() - 30);
+  
+  document.getElementById('dateFromFilter').value = thirtyDaysAgo.toISOString().split('T')[0];
+  document.getElementById('dateToFilter').value = today.toISOString().split('T')[0];
+
   // Initial Load
   applyFilters();
 
   // Attach Listeners to all filters
+  document.getElementById('dateFromFilter').addEventListener('change', applyFilters);
+  document.getElementById('dateToFilter').addEventListener('change', applyFilters);
   document.getElementById('regionFilter').addEventListener('change', applyFilters);
   document.getElementById('materialFilter').addEventListener('change', applyFilters);
   document.getElementById('milestoneFilter').addEventListener('change', applyFilters);
